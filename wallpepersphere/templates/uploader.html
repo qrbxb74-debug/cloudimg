@@ -1,0 +1,792 @@
+{% include 'theme_loader.html' %}
+    <style>
+        /* Template-scoped styles */
+        :root {
+            --bg-color: #121212;
+            --panel-color: #1e1e1e;
+            --border-color: #333;
+            --accent-color: var(--primary, #3d5afe);
+            --text-color: #e0e0e0;
+            --input-bg: #252525;
+        }
+
+        [data-theme="light"] {
+            --bg-color: #f5f7fa;
+            --panel-color: #ffffff;
+            --border-color: #e2e8f0;
+            --text-color: #1a202c;
+            --input-bg: #ffffff;
+        }
+
+        [data-theme="light"] .action-btn {
+            background: #000 !important;
+            color: #fff !important;
+        }
+        
+        .uploader-template-wrapper {
+            background-color: var(--panel-color);
+            color: var(--text-color);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 600px;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+        .main-wrapper {
+            display: flex;
+            flex: 1;
+            padding: 40px;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .drop-zone {
+            flex: 1;
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+            transition: 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--accent-color); background: rgba(var(--accent-color), 0.05); }
+        .center-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            justify-content: center;
+            overflow-y: auto;
+            max-height: 100%;
+            padding-right: 10px;
+        }
+        h2 { margin: 0 0 10px 0; color: var(--text-color); }
+        input, textarea, select {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 1rem;
+            outline: none;
+        }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent-color); }
+        .action-btn {
+            margin-top: 20px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        .action-btn:hover { background: #2f44c9; }
+        .action-btn:disabled { background: #444; cursor: not-allowed; }
+        
+        .file-status { margin-top: 15px; color: #888; text-align: center; }
+        .progress-bar { height: 4px; background: #333; width: 100%; margin-top: 15px; border-radius: 2px; overflow: hidden; display: none; }
+        .progress-fill { height: 100%; background: #4caf50; width: 0%; transition: width 0.3s; }
+
+        /* Mobile Adaptability */
+        @media (max-width: 868px) {
+            .uploader-template-wrapper {
+                min-height: auto;
+                height: 100%;
+                border-radius: 12px;
+            }
+            .main-wrapper {
+                flex-direction: column;
+                padding: 20px;
+                gap: 20px;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .drop-zone {
+                flex: none;
+                height: 365px;
+                min-height: 180px;
+            }
+            .drop-zone > div:first-child {
+                font-size: 3rem !important;
+                margin-bottom: 10px !important;
+            }
+            .center-form {
+                flex: none;
+                gap: 15px;
+                overflow-y: visible;
+                max-height: none;
+                padding-right: 0;
+            }
+            h2 { font-size: 1.4rem; }
+            .action-btn { padding: 14px; }
+        }
+
+        /* Enhanced Error Feedback */
+        .error-feedback-box {
+            margin-top: 20px;
+            background: rgba(255, 68, 68, 0.08);
+            border: 1px solid rgba(255, 68, 68, 0.4);
+            border-left: 4px solid #ff4444;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: left;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .error-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #ff4444;
+            font-weight: 700;
+            margin-bottom: 12px;
+            font-size: 1.05rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .error-content {
+            color: var(--text-color);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            opacity: 0.9;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .error-item {
+            margin-bottom: 8px;
+            display: flex;
+            gap: 8px;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Warning Mode for High Traffic */
+        .warning-mode {
+            background: rgba(255, 193, 7, 0.08) !important;
+            border-color: rgba(255, 193, 7, 0.4) !important;
+            border-left-color: #ffc107 !important;
+        }
+        .warning-mode .error-header { color: #ffc107 !important; }
+
+        /* POLICY MODAL STYLES */
+        .policy-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2500; /* Above everything */
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .policy-overlay.active { display: flex; opacity: 1; }
+        
+        .policy-card {
+            background: var(--panel-color);
+            width: 90%;
+            max-width: 1000px; /* Wide popup */
+            height: 85vh;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            transform: scale(0.95);
+            transition: transform 0.3s ease;
+            overflow: hidden;
+        }
+        .policy-overlay.active .policy-card { transform: scale(1); }
+
+        .policy-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.1);
+        }
+        .policy-title { font-size: 1.2rem; font-weight: 700; color: var(--text-color); margin: 0; }
+        
+        .policy-content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-color);
+        }
+        .policy-content-area h3 { margin-top: 30px; margin-bottom: 15px; color: var(--accent-color); }
+        .policy-content-area h4 { margin-top: 25px; margin-bottom: 10px; color: var(--text-color); font-size: 1.1rem; }
+        .policy-content-area p { margin-bottom: 15px; color: #aaa; }
+        .policy-content-area ul { margin-bottom: 20px; padding-left: 20px; color: #aaa; }
+        .policy-content-area li { margin-bottom: 8px; }
+
+        .policy-close-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .policy-close-btn:hover { background: #ff4444; border-color: #ff4444; color: white; }
+
+        /* Button Loading Animation */
+        .btn-loading {
+            position: relative;
+            padding-left: 45px !important;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: btn-spin 0.8s linear infinite;
+        }
+        @keyframes btn-spin { from { transform: translateY(-50%) rotate(0deg); } to { transform: translateY(-50%) rotate(360deg); } }
+    </style>
+
+<div class="uploader-template-wrapper">
+    <div class="main-wrapper">
+        <div class="drop-zone" id="dropZone">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📁</div>
+            <div style="font-size: 1.2rem; font-weight: 500;" data-i18n="Uploader_Drag_Drop">{{ _('Uploader_Drag_Drop') }}</div>
+            <div style="color: #666; margin-top: 10px;">Supports JPG, PNG, WEBP</div>
+            <div style="color: #888; font-size: 0.8rem; margin-top: 5px;" data-i18n="Uploader_Multi_Select_Hint">(Hold Ctrl/Cmd to select multiple files)</div>
+            <input type="file" id="fileInput" style="display: none;" accept="image/*" multiple="multiple">
+            <div class="file-status" id="fileStatus"></div>
+        </div>
+
+        <div class="center-form">
+            <h2 data-i18n="Uploader_Title">{{ _('Uploader_Title') }}</h2>
+            <p style="color: #888; margin-bottom: 10px; font-size: 0.9rem;"><span data-i18n="Uploader_Guidelines_Text">{{ _('Uploader_Guidelines_Text') }}</span> <button id="policyBtn" style="background:none; border:none; padding:0; color: var(--accent-color); cursor:pointer; font-size:inherit; text-decoration: underline; font-weight: 500;" data-i18n="Uploader_Read_Guidelines">{{ _('Uploader_Read_Guidelines') }}</button></p>
+            
+            {% if allow_category %}
+            <select id="categoryInput">
+                <option value="image" data-i18n="Uploader_Category_Image">{{ _('Uploader_Category_Image') }}</option>
+                <option value="logo" data-i18n="Uploader_Category_Logo">{{ _('Uploader_Category_Logo') }}</option>
+            </select>
+            {% else %}
+            <input type="hidden" id="categoryInput" value="image">
+            {% endif %}
+
+            <div style="background: rgba(61, 90, 254, 0.1); border: 1px solid rgba(61, 90, 254, 0.3); padding: 12px; border-radius: 8px; font-size: 0.85rem; color: var(--text-color); margin-bottom: 10px;">
+                <strong data-i18n="Uploader_AI_Processing_Label">{{ _('Uploader_AI_Processing_Label') }}</strong> <span data-i18n="Uploader_AI_Processing_Text">{{ _('Uploader_AI_Processing_Text') }}</span>
+            </div>
+
+            <div style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px;">
+                <input type="checkbox" id="legalCheckbox" style="width: 20px; height: 20px; margin-top: 2px; flex-shrink: 0; cursor: pointer;">
+                <label for="legalCheckbox" style="font-size: 0.9rem; color: var(--text-color); line-height: 1.4; cursor: pointer;" data-i18n="Uploader_Legal_Checkbox">
+                    {{ _('Uploader_Legal_Checkbox') }}
+                </label>
+            </div>
+
+            <div id="errorContainer" class="error-feedback-box" style="display: none;">
+                <div class="error-header" data-i18n="Uploader_Attention_Required"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> {{ _('Uploader_Attention_Required') }}</div>
+                <div id="analysisLog" class="error-content"></div>
+            </div>
+
+            <button class="action-btn" id="publishBtn" disabled data-i18n="Uploader_Upload_Btn">{{ _('Uploader_Upload_Btn') }}</button>
+            
+            <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+        </div>
+    </div>
+</div>
+
+<!-- POLICY MODAL -->
+<div class="policy-overlay" id="policyModal">
+    <div class="policy-card">
+        <div class="policy-header">
+            <h2 class="policy-title" data-i18n="Policy_Title">{{ _('Policy_Title') }}</h2>
+            <button class="policy-close-btn" id="closePolicyBtn">✕</button>
+        </div>
+        <div class="policy-content-area">
+            <h3 data-i18n="Policy_1_Title">{{ _('Policy_1_Title') }}</h3>
+            <p data-i18n="Policy_1_Text1">{{ _('Policy_1_Text1') }}</p>
+            <p data-i18n="Policy_1_Text2">{{ _('Policy_1_Text2') }}</p>
+
+            <h3 data-i18n="Policy_2_Title">{{ _('Policy_2_Title') }}</h3>
+            <p data-i18n="Policy_2_Text1">{{ _('Policy_2_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_2_List1">{{ _('Policy_2_List1') }}</li>
+                <li data-i18n="Policy_2_List2">{{ _('Policy_2_List2') }}</li>
+            </ul>
+            <p><strong data-i18n="Policy_2_Warning1">{{ _('Policy_2_Warning1') }}</strong><br>
+            <strong data-i18n="Policy_2_Warning2">{{ _('Policy_2_Warning2') }}</strong></p>
+
+            <h3 data-i18n="Policy_3_Title">{{ _('Policy_3_Title') }}</h3>
+            <p data-i18n="Policy_3_Text1">{{ _('Policy_3_Text1') }}</p>
+
+            <h4 data-i18n="Policy_3_1_Title">{{ _('Policy_3_1_Title') }}</h4>
+            <p data-i18n="Policy_3_1_Text1">{{ _('Policy_3_1_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_3_1_List1">{{ _('Policy_3_1_List1') }}</li>
+                <li data-i18n="Policy_3_1_List2">{{ _('Policy_3_1_List2') }}</li>
+                <li data-i18n="Policy_3_1_List3">{{ _('Policy_3_1_List3') }}</li>
+                <li data-i18n="Policy_3_1_List4">{{ _('Policy_3_1_List4') }}</li>
+                <li data-i18n="Policy_3_1_List5">{{ _('Policy_3_1_List5') }}</li>
+            </ul>
+            <p><strong data-i18n="Policy_3_1_Warning">{{ _('Policy_3_1_Warning') }}</strong></p>
+            <ul>
+                <li data-i18n="Policy_3_1_Warning_List1">{{ _('Policy_3_1_Warning_List1') }}</li>
+                <li data-i18n="Policy_3_1_Warning_List2">{{ _('Policy_3_1_Warning_List2') }}</li>
+                <li data-i18n="Policy_3_1_Warning_List3">{{ _('Policy_3_1_Warning_List3') }}</li>
+                <li data-i18n="Policy_3_1_Warning_List4">{{ _('Policy_3_1_Warning_List4') }}</li>
+            </ul>
+
+            <h4 data-i18n="Policy_3_2_Title">{{ _('Policy_3_2_Title') }}</h4>
+            <p data-i18n="Policy_3_2_Text1">{{ _('Policy_3_2_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_3_2_List1">{{ _('Policy_3_2_List1') }}</li>
+                <li data-i18n="Policy_3_2_List2">{{ _('Policy_3_2_List2') }}</li>
+                <li data-i18n="Policy_3_2_List3">{{ _('Policy_3_2_List3') }}</li>
+                <li data-i18n="Policy_3_2_List4">{{ _('Policy_3_2_List4') }}</li>
+                <li data-i18n="Policy_3_2_List5">{{ _('Policy_3_2_List5') }}</li>
+                <li data-i18n="Policy_3_2_List6">{{ _('Policy_3_2_List6') }}</li>
+                <li data-i18n="Policy_3_2_List7">{{ _('Policy_3_2_List7') }}</li>
+                <li data-i18n="Policy_3_2_List8">{{ _('Policy_3_2_List8') }}</li>
+            </ul>
+
+            <h4 data-i18n="Policy_3_3_Title">{{ _('Policy_3_3_Title') }}</h4>
+            <p data-i18n="Policy_3_3_Text1">{{ _('Policy_3_3_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_3_3_List1">{{ _('Policy_3_3_List1') }}</li>
+                <li data-i18n="Policy_3_3_List2">{{ _('Policy_3_3_List2') }}</li>
+                <li data-i18n="Policy_3_3_List3">{{ _('Policy_3_3_List3') }}</li>
+                <li data-i18n="Policy_3_3_List4">{{ _('Policy_3_3_List4') }}</li>
+                <li data-i18n="Policy_3_3_List5">{{ _('Policy_3_3_List5') }}</li>
+            </ul>
+
+            <h3 data-i18n="Policy_4_Title">{{ _('Policy_4_Title') }}</h3>
+            <p data-i18n="Policy_4_Text1">{{ _('Policy_4_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_4_List1">{{ _('Policy_4_List1') }}</li>
+                <li data-i18n="Policy_4_List2">{{ _('Policy_4_List2') }}</li>
+                <li data-i18n="Policy_4_List3">{{ _('Policy_4_List3') }}</li>
+            </ul>
+            <p><strong data-i18n="Policy_4_Warning">{{ _('Policy_4_Warning') }}</strong></p>
+            <p data-i18n="Policy_4_Text2">{{ _('Policy_4_Text2') }}</p>
+            <ul>
+                <li data-i18n="Policy_4_List4">{{ _('Policy_4_List4') }}</li>
+                <li data-i18n="Policy_4_List5">{{ _('Policy_4_List5') }}</li>
+                <li data-i18n="Policy_4_List6">{{ _('Policy_4_List6') }}</li>
+            </ul>
+
+            <h3 data-i18n="Policy_5_Title">{{ _('Policy_5_Title') }}</h3>
+            <p data-i18n="Policy_5_Text1">{{ _('Policy_5_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_5_List1">{{ _('Policy_5_List1') }}</li>
+                <li data-i18n="Policy_5_List2">{{ _('Policy_5_List2') }}</li>
+                <li data-i18n="Policy_5_List3">{{ _('Policy_5_List3') }}</li>
+            </ul>
+            <p data-i18n="Policy_5_Text2">{{ _('Policy_5_Text2') }}</p>
+            <ul>
+                <li data-i18n="Policy_5_List4">{{ _('Policy_5_List4') }}</li>
+                <li data-i18n="Policy_5_List5">{{ _('Policy_5_List5') }}</li>
+                <li data-i18n="Policy_5_List6">{{ _('Policy_5_List6') }}</li>
+                <li data-i18n="Policy_5_List7">{{ _('Policy_5_List7') }}</li>
+            </ul>
+
+            <h3 data-i18n="Policy_6_Title">{{ _('Policy_6_Title') }}</h3>
+            <h4 data-i18n="Policy_6_1_Title">{{ _('Policy_6_1_Title') }}</h4>
+            <p data-i18n="Policy_6_1_Text">{{ _('Policy_6_1_Text') }}</p>
+
+            <h4 data-i18n="Policy_6_2_Title">{{ _('Policy_6_2_Title') }}</h4>
+            <p data-i18n="Policy_6_2_Text1">{{ _('Policy_6_2_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_6_2_List1">{{ _('Policy_6_2_List1') }}</li>
+                <li data-i18n="Policy_6_2_List2">{{ _('Policy_6_2_List2') }}</li>
+                <li data-i18n="Policy_6_2_List3">{{ _('Policy_6_2_List3') }}</li>
+                <li data-i18n="Policy_6_2_List4">{{ _('Policy_6_2_List4') }}</li>
+                <li data-i18n="Policy_6_2_List5">{{ _('Policy_6_2_List5') }}</li>
+            </ul>
+            <p data-i18n="Policy_6_2_Text2">{{ _('Policy_6_2_Text2') }}</p>
+            <p data-i18n="Policy_6_2_Text3">{{ _('Policy_6_2_Text3') }}</p>
+
+            <h3 data-i18n="Policy_7_Title">{{ _('Policy_7_Title') }}</h3>
+            <p data-i18n="Policy_7_Text1">{{ _('Policy_7_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_7_List1">{{ _('Policy_7_List1') }}</li>
+                <li data-i18n="Policy_7_List2">{{ _('Policy_7_List2') }}</li>
+                <li data-i18n="Policy_7_List3">{{ _('Policy_7_List3') }}</li>
+            </ul>
+            <p data-i18n="Policy_7_Text2">{{ _('Policy_7_Text2') }}</p>
+            <p data-i18n="Policy_7_Text3">{{ _('Policy_7_Text3') }}</p>
+            <ul>
+                <li data-i18n="Policy_7_List4">{{ _('Policy_7_List4') }}</li>
+                <li data-i18n="Policy_7_List5">{{ _('Policy_7_List5') }}</li>
+            </ul>
+
+            <h3 data-i18n="Policy_8_Title">{{ _('Policy_8_Title') }}</h3>
+            <p data-i18n="Policy_8_Text1">{{ _('Policy_8_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_8_List1">{{ _('Policy_8_List1') }}</li>
+                <li data-i18n="Policy_8_List2">{{ _('Policy_8_List2') }}</li>
+                <li data-i18n="Policy_8_List3">{{ _('Policy_8_List3') }}</li>
+                <li data-i18n="Policy_8_List4">{{ _('Policy_8_List4') }}</li>
+            </ul>
+            <p><strong data-i18n="Policy_8_Warning">{{ _('Policy_8_Warning') }}</strong></p>
+
+            <h3 data-i18n="Policy_9_Title">{{ _('Policy_9_Title') }}</h3>
+            <p data-i18n="Policy_9_Text1">{{ _('Policy_9_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_9_List1">{{ _('Policy_9_List1') }}</li>
+                <li data-i18n="Policy_9_List2">{{ _('Policy_9_List2') }}</li>
+                <li data-i18n="Policy_9_List3">{{ _('Policy_9_List3') }}</li>
+            </ul>
+            <p data-i18n="Policy_9_Text2">{{ _('Policy_9_Text2') }}</p>
+
+            <h3 data-i18n="Policy_10_Title">{{ _('Policy_10_Title') }}</h3>
+            <p data-i18n="Policy_10_Text1">{{ _('Policy_10_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_10_List1">{{ _('Policy_10_List1') }}</li>
+                <li data-i18n="Policy_10_List2">{{ _('Policy_10_List2') }}</li>
+                <li data-i18n="Policy_10_List3">{{ _('Policy_10_List3') }}</li>
+                <li data-i18n="Policy_10_List4">{{ _('Policy_10_List4') }}</li>
+                <li data-i18n="Policy_10_List5">{{ _('Policy_10_List5') }}</li>
+            </ul>
+            <p data-i18n="Policy_10_Text2">{{ _('Policy_10_Text2') }}</p>
+
+            <h3 data-i18n="Policy_11_Title">{{ _('Policy_11_Title') }}</h3>
+            <p data-i18n="Policy_11_Text1">{{ _('Policy_11_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_11_List1">{{ _('Policy_11_List1') }}</li>
+                <li data-i18n="Policy_11_List2">{{ _('Policy_11_List2') }}</li>
+                <li data-i18n="Policy_11_List3">{{ _('Policy_11_List3') }}</li>
+            </ul>
+            <p data-i18n="Policy_11_Text2">{{ _('Policy_11_Text2') }}</p>
+            <ul>
+                <li data-i18n="Policy_11_List4">{{ _('Policy_11_List4') }}</li>
+                <li data-i18n="Policy_11_List5">{{ _('Policy_11_List5') }}</li>
+                <li data-i18n="Policy_11_List6">{{ _('Policy_11_List6') }}</li>
+            </ul>
+
+            <h3 data-i18n="Policy_12_Title">{{ _('Policy_12_Title') }}</h3>
+            <p data-i18n="Policy_12_Text1">{{ _('Policy_12_Text1') }}</p>
+            <p data-i18n="Policy_12_Text2">{{ _('Policy_12_Text2') }}</p>
+
+            <h3 data-i18n="Policy_13_Title">{{ _('Policy_13_Title') }}</h3>
+            <p data-i18n="Policy_13_Text1">{{ _('Policy_13_Text1') }}</p>
+            <ul>
+                <li data-i18n="Policy_13_List1">{{ _('Policy_13_List1') }}</li>
+                <li data-i18n="Policy_13_List2">{{ _('Policy_13_List2') }}</li>
+                <li data-i18n="Policy_13_List3">{{ _('Policy_13_List3') }}</li>
+            </ul>
+            <p data-i18n="Policy_13_Text2">{{ _('Policy_13_Text2') }}</p>
+
+            <h3 data-i18n="Policy_14_Title">{{ _('Policy_14_Title') }}</h3>
+            <p><span data-i18n="Policy_14_Text">{{ _('Policy_14_Text') }}</span><br>
+            📧 QRBXB70@GMAIL.COM</p>
+
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); text-align: center; padding-bottom: 20px;">
+                <button id="policyAgreeBtn" class="action-btn" style="width: 100%; max-width: 300px; margin: 0 auto;" data-i18n="Policy_Agree_Btn">{{ _('Policy_Agree_Btn') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script>
+        {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const publishBtn = document.getElementById('publishBtn');
+        const legalCheckbox = document.getElementById('legalCheckbox');
+        
+        // Logo Button Intercept Logic
+        const categoryInput = document.getElementById('categoryInput');
+        categoryInput.addEventListener('change', () => {
+            if (categoryInput.value === 'logo') alert("Logo services are temporarily unavailable.");
+        });
+        const policyBtn = document.getElementById('policyBtn');
+        const policyModal = document.getElementById('policyModal');
+        const closePolicyBtn = document.getElementById('closePolicyBtn');
+        let selectedFiles = [];
+        
+        // Check for interrupted uploads on load
+        // Execute immediately as this is dynamic content (DOMContentLoaded already fired)
+
+        // Legal Checkbox Logic
+        legalCheckbox.onchange = () => {
+            publishBtn.disabled = !legalCheckbox.checked;
+        };
+
+        // Policy Modal Logic
+        if(policyBtn && policyModal) {
+            policyBtn.onclick = (e) => {
+                e.preventDefault();
+                policyModal.classList.add('active');
+            };
+            closePolicyBtn.onclick = () => {
+                policyModal.classList.remove('active');
+            };
+            policyModal.onclick = (e) => {
+                if(e.target === policyModal) policyModal.classList.remove('active');
+            };
+
+            const policyAgreeBtn = document.getElementById('policyAgreeBtn');
+            if(policyAgreeBtn) {
+                policyAgreeBtn.onclick = () => {
+                    policyModal.classList.remove('active');
+                    legalCheckbox.checked = true;
+                    // Trigger change to update publish button state
+                    legalCheckbox.dispatchEvent(new Event('change'));
+                };
+            }
+        }
+
+        // Drag & Drop Logic
+        dropZone.addEventListener('click', (e) => {
+            if (e.target !== fileInput) {
+                fileInput.value = ''; // Reset to allow re-selecting the same file
+                fileInput.click();
+            }
+        });
+        dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('dragover'); };
+        dropZone.ondragleave = () => dropZone.classList.remove('dragover');
+        dropZone.ondrop = (e) => { e.preventDefault(); dropZone.classList.remove('dragover'); handleFiles(e.dataTransfer.files); };
+        fileInput.onchange = () => handleFiles(fileInput.files);
+
+        function handleFiles(files) {
+            let fileList = Array.from(files);
+            if (fileList.length > 5) {
+            
+                alert("You can only upload up to 5 files at a time.");
+                fileList = fileList.slice(0, 5);
+            }
+            selectedFiles = fileList;
+            document.getElementById('fileStatus').textContent = `${selectedFiles.length} {{ _('Uploader_Files_Ready') }}`;
+            
+            // Reset UI state
+            document.getElementById('publishBtn').style.display = 'block';
+            document.getElementById('errorContainer').style.display = 'none';
+            document.getElementById('progressBar').style.display = 'none';
+        }
+
+        function getUserFriendlyError(technicalMessage) {
+            if (msg.includes('failed to fetch') || msg.includes('networkerror')) {
+                return "{{ _('Uploader_Err_Network') }}";
+            }
+            if (msg.includes('api key not valid')) {
+                return "{{ _('Uploader_Err_AI_Config') }}";
+            }
+            if (msg.includes('rejected by our verification system')) {
+                return "{{ _('Uploader_Err_Rejected') }}";
+            }
+            if (msg.includes('unable to identify')) {
+                return "{{ _('Uploader_Err_Identify') }}";
+            }
+            // Default generic error
+            return "{{ _('Uploader_Err_Unexpected') }}";
+        }
+
+        async function pollTaskStatus(taskId) {
+            while(true) {
+                // Poll every 5 seconds (optimized from 10/15s for better responsiveness)
+                await new Promise(r => setTimeout(r, 5000)); 
+                try {
+                    let statusRes = await fetch(`/api/check_task/${taskId}`).then(r=>r.json());
+                    if(statusRes.status === 'completed') {
+                        return { success: true, data: statusRes.data };
+                    }
+                    if(statusRes.status === 'failed') {
+                        return { success: false, error: statusRes.error, critical_stop: statusRes.critical_stop };
+                    }
+                } catch(e) {
+                    console.warn("Polling error", e);
+                    // Continue polling on network error
+                }
+            }
+        }
+
+        // Publish Logic
+        publishBtn.onclick = async () => {
+            if(!selectedFiles.length) return alert("{{ _('Uploader_Select_Files_Alert') }}");
+            publishBtn.disabled = true;
+            
+            publishBtn.setAttribute('data-i18n', 'Uploader_Uploading');
+            if (window.translationSystem && window.translationSystem.translations[window.translationSystem.currentLang]) {
+                publishBtn.textContent = window.translationSystem.translations[window.translationSystem.currentLang]['Uploader_Uploading'] || "{{ _('Uploader_Uploading') }}";
+            } else {
+                publishBtn.textContent = "{{ _('Uploader_Uploading') }}";
+            }
+            publishBtn.classList.add('btn-loading');
+            
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const errorContainer = document.getElementById('errorContainer');
+            const log = document.getElementById('analysisLog');
+            
+            progressBar.style.display = 'block';
+            errorContainer.style.display = 'none';
+            log.innerHTML = '';
+
+            const category = document.getElementById('categoryInput').value;
+            
+            // Optimization: Process 2 files concurrently to speed up uploads
+            // while respecting AI API rate limits.
+            const CONCURRENCY_LIMIT = 1;
+            let nextFileIndex = 0;
+            let successCount = 0;
+            let completedCount = 0;
+            let stopUpload = false;
+
+            const processNextFile = async () => {
+                if (stopUpload || nextFileIndex >= selectedFiles.length) return;
+                
+                const i = nextFileIndex++;
+                const file = selectedFiles[i];
+                
+                try {
+                    // 1. Upload
+                    let fd = new FormData(); fd.append('file', file);
+                    let upRes = await fetch('/upload', {method:'POST', body:fd}).then(r=>r.json());
+                    
+                    if(!upRes.success) throw new Error(upRes.message);
+                    
+                    // 2. Analyze (Queue Request)
+                    let queueRes = await fetch('/api/analyze', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({filename: upRes.filename})
+                    }).then(r=>r.json());
+
+                    if(!queueRes.success) throw new Error(queueRes.message);
+
+                    // 3. Poll for Results
+                    let aiRes;
+                    if(queueRes.data) {
+                        aiRes = { success: true, data: queueRes.data };
+                    } else {
+                        aiRes = await pollTaskStatus(queueRes.task_id);
+                    }
+
+                    if (aiRes.critical_stop) {
+                        stopUpload = true;
+                        if (typeof window.triggerSecurityAlert === 'function') {
+                            window.triggerSecurityAlert(aiRes.error);
+                        }
+                        throw new Error(aiRes.error);
+                    }
+
+                    let metadata = { name: file.name, description: '', 'color-code': '', 'key word': '' };
+
+                    if(aiRes.success) {
+                        // Fix: Correctly access nested JSON structure from VisualRecognizer
+                        const data = aiRes.data;
+                        if (data.translations && data.translations.en) {
+                             metadata.name = data.translations.en.name;
+                             metadata['color-code'] = data.translations.en.color;
+                             metadata['key word'] = data.translations.en.keywords;
+                             metadata['content_category'] = data.category; // Category is at root
+                        } else {
+                             // Fallback for legacy/flat structure
+                             metadata.name = data.name || file.name;
+                             metadata['color-code'] = data.color || data.color_code;
+                             metadata['key word'] = data.keywords;
+                             metadata['content_category'] = data.category;
+                        }
+
+                        if (data.description) {
+                            // Combine Description, Action, and Components into one rich text field
+                            const components = Array.isArray(data.components) ? data.components.join(', ') : data.components;
+                            metadata.description = `${data.description}\n\nAction: ${data.current_action}\nComponents: ${components}`;
+                        }
+                    } else {
+                        // Stop upload if analysis failed (e.g. unable to identify)
+                        throw new Error(aiRes.error || "{{ _('Uploader_Err_Identify') }}");
+                    }
+
+                    // 3. Publish
+                    let pubPayload = { filename: upRes.filename, category: category, r2_data: upRes.r2_data, ...metadata };
+                    let pubRes = await fetch('/publish', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(pubPayload)
+                    }).then(r=>r.json());
+
+                    if(pubRes.success) {
+                        successCount++;
+                    } else {
+                        throw new Error(pubRes.message);
+                    }
+                } catch(e) {
+                    console.error("Upload Error:", e.message);
+                    const userMsg = getUserFriendlyError(e.message);
+                    publishBtn.style.display = 'none';
+                    
+                    // Revert to error styling if we were in warning mode
+                    errorContainer.classList.remove('warning-mode');
+                    errorContainer.querySelector('.error-header').innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> {{ _("Uploader_Attention_Required") }}';
+                    
+                    errorContainer.style.display = 'block';
+                    log.innerHTML += `<div class="error-item"><span style="color:#ff5252">●</span> <span><strong>${file.name}:</strong> ${userMsg}</span></div>`;
+                } finally {
+                    completedCount++;
+                    progressFill.style.width = (completedCount/selectedFiles.length * 100) + '%';
+                    log.scrollTop = log.scrollHeight;
+                    
+                    // Recursively process the next file in the queue
+                    if (!stopUpload) await processNextFile();
+                }
+            };
+
+            // Start the concurrent workers
+            const workers = [];
+            for(let k=0; k < CONCURRENCY_LIMIT; k++) {
+                workers.push(processNextFile());
+            }
+            
+            await Promise.all(workers);
+
+            publishBtn.classList.remove('btn-loading');
+
+            if(successCount === selectedFiles.length) {
+                publishBtn.setAttribute('data-i18n', 'Uploader_Complete');
+                if (window.translationSystem && window.translationSystem.translations[window.translationSystem.currentLang]) {
+                    publishBtn.textContent = window.translationSystem.translations[window.translationSystem.currentLang]['Uploader_Complete'] || "{{ _('Uploader_Complete') }}";
+                } else {
+                    publishBtn.textContent = "{{ _('Uploader_Complete') }}";
+                }
+                setTimeout(() => window.location.href = '/', 1500);
+            } else {
+                publishBtn.removeAttribute('data-i18n');
+                publishBtn.textContent = `${successCount} / ${selectedFiles.length} {{ _('Uploader_Published') }}`;
+                publishBtn.disabled = false;
+            }
+        };
+        }
+    </script>
