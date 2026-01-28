@@ -134,8 +134,40 @@ def process_images(folder_path):
 
     return processed_files
 
+def check_server_connection():
+    """Checks if the target server is reachable before starting heavy processing."""
+    try:
+        # Extract base URL (e.g., https://www.wallpepersphere.com)
+        from urllib.parse import urlparse
+        parsed = urlparse(APP_API_URL)
+        base_url = f"{parsed.scheme}://{parsed.netloc}"
+        
+        print(f"Checking connection to {base_url}...")
+        response = requests.get(base_url, timeout=10)
+        
+        if response.status_code == 200:
+            print("✅ Server is online.")
+            return True
+        else:
+            print(f"⚠️ Server returned status code: {response.status_code}")
+            return True
+    except Exception as e:
+        print(f"❌ Connection Failed: {e}")
+        print("Please check:")
+        print("1. Your internet connection.")
+        print("2. The APP_API_URL in your .env file.")
+        print("3. If your site is currently running.")
+        return False
+
 def main():
     print("=== ADMIN BULK UPLOADER TOOL ===")
+    
+    # Check connection first
+    if not check_server_connection():
+        retry = input("Connection failed. Continue anyway? (y/n): ")
+        if retry.lower() != 'y':
+            return
+
     print("1. Enter the full path to your local image folder.")
     folder = input("Folder Path: ").strip().strip('"')
     
