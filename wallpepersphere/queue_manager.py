@@ -102,46 +102,70 @@ class UploadQueueManager:
         return active_tasks
 
     def _process_queue(self):
-        """Internal loop to process items one by one."""
+        """Internal loop to process items one by one. Made more robust to prevent thread death."""
         while self.is_running:
+            task = None
             try:
                 # Get task, wait up to 1 second to check is_running flag periodically
                 task = self.queue.get(timeout=1)
             except queue.Empty:
+                # This is normal when the queue is idle. Continue to the next loop iteration.
+                continue
+            except Exception:
+                # A more serious error with the queue itself.
+                logger.exception("CRITICAL: Unhandled exception in queue.get(). Worker thread is recovering.")
+                time.sleep(5) # Avoid fast-spinning on a persistent queue error
                 continue
 
-            start_time = time.time()
-            
+            # If we got a task, process it within a robust error-handling block.
             try:
+                start_time = time.time()
+                
+                # Log that we are starting to process this specific task.
+                logger.info(f"Worker picked up task {task['id']}. Starting processing.")
+                
                 self._handle_gemini_processing(task)
-            except Exception as e:
-                logger.error(f"Error processing task {task['id']}: {str(e)}")
-                # Future: Add retry logic here if needed
-            finally:
-                self.queue.task_done()
+                
+                # Enforce Rate Limit
+                # Calculate how long the request took, and sleep the remainder of the interval
+                elapsed_time = time.time() - start_time
+                if elapsed_time < self.rate_limit_seconds:
+                    sleep_duration = self.rate_limit_seconds - elapsed_time
+                    logger.info(f"Rate limit enforcement: Sleeping for {sleep_duration:.2f}s")
+                    time.sleep(sleep_duration)
 
-            # Enforce Rate Limit
-            # Calculate how long the request took, and sleep the remainder of the interval
-            elapsed_time = time.time() - start_time
-            if elapsed_time < self.rate_limit_seconds:
-                sleep_duration = self.rate_limit_seconds - elapsed_time
-                logger.info(f"Rate limit enforcement: Sleeping for {sleep_duration:.2f}s")
-                time.sleep(sleep_duration)
+            except Exception as e:
+                # This is the key change: catch *any* exception during processing to prevent thread death.
+                logger.exception(f"Gemini worker recovered from an unhandled exception while processing task {task.get('id', 'UNKNOWN')}.")
+                
+                # Ensure the task is marked as failed if it wasn't already.
+                if task and task.get('id') in self.tasks:
+                    task_ref = self.tasks[task['id']]
+                    if task_ref.get('status') != 'failed':
+                        task_ref['status'] = 'failed'
+                        task_ref['error'] = 'Worker thread crashed during processing.'
+                
+                time.sleep(1) # Small delay before picking up the next task.
+            finally:
+                # This is crucial. It signals that the task is finished, allowing the queue to proceed.
+                # It must be called regardless of success or failure.
+                if task:
+                    self.queue.task_done()
 
     def _handle_gemini_processing(self, task):
         """
         The logic that actually calls the Gemini API.
         """
-        logger.info(f"Processing task {task['id']} for user {task['user_id']}...")
-        
         file_path = task['file_path']
         source_path = task.get('source_file_path')
         
+        # This try-except is for handling specific logic within the task,
+        # while the one in _process_queue is a safety net for the whole thread.
         try:
             if not os.path.exists(file_path):
-                logger.error(f"File not found: {file_path}")
+                logger.warning(f"File for task {task['id']} not found at path: {file_path}. Marking as failed.")
                 task['status'] = 'failed'
-                task['error'] = 'File not found in queue'
+                task['error'] = 'File not found in queue storage'
                 return
 
             task['status'] = 'processing'
@@ -169,15 +193,14 @@ class UploadQueueManager:
 
         except Exception as e:
             task['status'] = 'failed'
-            task['error'] = f"Unexpected error: {str(e)}"
-            logger.error(f"Critical error in task {task['id']}: {e}")
+            task['error'] = f"Unexpected error during gemini handling: {str(e)}"
+            logger.exception(f"Critical error in _handle_gemini_processing for task {task['id']}")
             
             # Emergency cleanup of source file
             if source_path and os.path.exists(source_path):
                 try:
                     os.remove(source_path)
                 except: pass
-
         finally:
             # Cleanup: Only remove the temp file if it FAILED. 
             # If success, we keep it so the user can publish it later.
@@ -185,5 +208,6 @@ class UploadQueueManager:
                 try:
                     if os.path.exists(file_path):
                         os.remove(file_path)
-                except OSError:
-                    pass
+                        logger.info(f"Cleaned up temp queue file for failed task {task['id']}: {file_path}")
+                except OSError as e:
+                    logger.error(f"Error cleaning up temp queue file {file_path}: {e}")
