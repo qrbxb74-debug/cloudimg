@@ -2,6 +2,7 @@ import os
 import time
 import uuid
 import sqlite3
+import logging
 import random
 import json
 import difflib
@@ -3245,3 +3246,4 @@ if __name__ == '__main__':
     # Only enable debug if explicitly set in environment (Default: False for safety)
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', use_reloader=False)
+
