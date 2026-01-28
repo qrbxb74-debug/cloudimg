@@ -6,6 +6,7 @@ import random
 import json
 import difflib
 import re
+from werkzeug.middleware.proxy_fix import ProxyFix
 import threading
 import logging
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, session, g, send_file, Response
@@ -48,6 +49,8 @@ TEMP_FOLDER = os.path.join(DB_FOLDER, 'temp_uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
 
 app = Flask(__name__)
+# Fix: Tell Flask it is behind a Proxy (Cloudflare/Render) so it generates HTTPS links
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max upload size
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_secure_secret_key_here')  # Required for session management
@@ -3272,3 +3275,4 @@ if __name__ == '__main__':
     # Only enable debug if explicitly set in environment (Default: False for safety)
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', use_reloader=False)
+
