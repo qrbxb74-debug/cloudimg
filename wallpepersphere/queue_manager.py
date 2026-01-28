@@ -36,11 +36,14 @@ class UploadQueueManager:
             
     def start_worker(self):
         """Starts the background processing thread."""
-        if not self.is_running:
-            self.is_running = True
-            self.worker_thread = threading.Thread(target=self._process_queue, daemon=True)
-            self.worker_thread.start()
-            logger.info("Queue worker started.")
+        # Prevent starting multiple threads if one is already alive
+        if self.worker_thread and self.worker_thread.is_alive():
+            return
+
+        self.is_running = True
+        self.worker_thread = threading.Thread(target=self._process_queue, daemon=True)
+        self.worker_thread.start()
+        logger.info("Queue worker started.")
 
     def stop_worker(self):
         """Stops the background processing thread."""
@@ -48,6 +51,10 @@ class UploadQueueManager:
         if self.worker_thread:
             self.worker_thread.join()
             logger.info("Queue worker stopped.")
+            
+    def is_alive(self):
+        """Checks if the worker thread is currently active."""
+        return self.worker_thread is not None and self.worker_thread.is_alive()
 
     def add_to_queue(self, source_file_path, user_id, request_data=None):
         """
@@ -111,7 +118,7 @@ class UploadQueueManager:
             except queue.Empty:
                 # This is normal when the queue is idle. Continue to the next loop iteration.
                 continue
-            except Exception:
+            except BaseException:
                 # A more serious error with the queue itself.
                 logger.exception("CRITICAL: Unhandled exception in queue.get(). Worker thread is recovering.")
                 time.sleep(5) # Avoid fast-spinning on a persistent queue error
@@ -134,7 +141,7 @@ class UploadQueueManager:
                     logger.info(f"Rate limit enforcement: Sleeping for {sleep_duration:.2f}s")
                     time.sleep(sleep_duration)
 
-            except Exception as e:
+            except BaseException as e:
                 # This is the key change: catch *any* exception during processing to prevent thread death.
                 logger.exception(f"Gemini worker recovered from an unhandled exception while processing task {task.get('id', 'UNKNOWN')}.")
                 
