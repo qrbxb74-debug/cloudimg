@@ -20,7 +20,7 @@ R2_DOMAIN = os.environ.get('R2_DOMAIN', '').rstrip('/')
 ADMIN_TOKEN = os.environ.get('ADMIN_TOKEN')
 
 # Target App URL (Change this to your live URL when deploying, e.g., https://myapp.onrender.com)
-APP_API_URL = os.environ.get('APP_API_URL', "http://127.0.0.1:5000/api/admin/bulk_import")
+APP_API_URL = os.environ.get('APP_API_URL', "https://www.wallpepersphere.com/api/admin/bulk_import")
 
 if not all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, ADMIN_TOKEN]):
     print("Error: Missing R2 credentials or ADMIN_TOKEN in .env file.")
@@ -284,3 +284,4 @@ Return ONLY the valid JSON array. No markdown, no text.
 
 if __name__ == "__main__":
     main()
+
