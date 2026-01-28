@@ -2,11 +2,12 @@ import os
 import time
 import uuid
 import sqlite3
-import logging
 import random
 import json
 import difflib
 import re
+import threading
+import logging
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, session, g, send_file, Response
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -24,6 +25,9 @@ from botocore.config import Config
 from dotenv import load_dotenv
 load_dotenv()
 
+# Configure Logging to ensure output appears in Render logs
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 def clean_asset_list(assets):
     """Ensures avatar paths in a list of asset dictionaries are just filenames."""
     for asset in assets:
@@ -40,7 +44,7 @@ DB_FOLDER = os.environ.get('DB_FOLDER', '.')
 
 # Configuration
 UPLOAD_FOLDER = os.path.join(DB_FOLDER, 'uploads')
-TEMP_FOLDER = 'temp_uploads'
+TEMP_FOLDER = os.path.join(DB_FOLDER, 'temp_uploads')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'}
 
 app = Flask(__name__)
@@ -144,8 +148,11 @@ visual_recognizer = VisualRecognizer(api_keys=API_KEYS)
 
 # Initialize Queue Manager
 # Rate limit: 2.0s is safe because we have 6 rotated API keys
-queue_manager = UploadQueueManager(visual_recognizer, rate_limit_seconds=2.0)
-queue_manager.start_worker()
+# Use persistent storage for the queue to prevent file loss on Render
+QUEUE_STORAGE = os.path.join(DB_FOLDER, 'queue_storage')
+queue_manager = UploadQueueManager(visual_recognizer, temp_storage_path=QUEUE_STORAGE, rate_limit_seconds=2.0)
+# Do NOT start the worker in the global scope. It causes issues with Gunicorn's forking model.
+# We will start it lazily on the first request to each worker process.
 
 # ===================================================================================
 #                                 I18N (TRANSLATION) ENGINE
@@ -175,9 +182,28 @@ def load_translations():
 # Initialize translations on startup
 load_translations()
 
+# --- Worker Thread Initialization for Gunicorn ---
+# This ensures that each Gunicorn worker process gets its own background thread.
+_worker_started = False
+_worker_lock = threading.Lock()
+
+def start_background_worker():
+    """Starts the queue manager's worker thread if not already started for this process."""
+    global _worker_started
+    with _worker_lock:
+        # Check if thread is actually running, restart if dead
+        if not _worker_started or not queue_manager.is_alive():
+            logging.info("Flask App: Initializing (or restarting) background worker thread...")
+            queue_manager.start_worker()
+            _worker_started = True
+# -----------------------------------------------
+
 @app.before_request
 def before_request():
     """Detects user language preference before every request."""
+    # Start the background worker on the first request to this process.
+    start_background_worker()
+
     # Fix: Clean avatar path in session if it has legacy prefix
     if 'avatar' in session and session['avatar'] and session['avatar'].startswith('/static/avatars/'):
         session['avatar'] = session['avatar'].replace('/static/avatars/', '')
@@ -3246,4 +3272,3 @@ if __name__ == '__main__':
     # Only enable debug if explicitly set in environment (Default: False for safety)
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', use_reloader=False)
-
