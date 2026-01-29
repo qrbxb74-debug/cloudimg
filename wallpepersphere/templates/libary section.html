@@ -47,27 +47,6 @@
                 grid.appendChild(skel);
             }
 
-            // Observer for Blur-Up Loading
-            const observer = new IntersectionObserver((entries, obs) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const card = entry.target;
-                        const img = card.querySelector('img[data-medium]');
-                        if (img) {
-                            const mediumUrl = img.getAttribute('data-medium');
-                            if (mediumUrl) {
-                                const mediumImg = new Image();
-                                mediumImg.src = mediumUrl;
-                                mediumImg.onload = () => {
-                                    img.src = mediumUrl;
-                                };
-                            }
-                        }
-                        obs.unobserve(card);
-                    }
-                });
-            }, { rootMargin: "50px" });
-
             // 2. Fetch Data
             fetch('/api/assets/image?limit=8&sort=random')
                 .then(r => r.json())
@@ -77,15 +56,14 @@
                         data.assets.forEach((asset, index) => {
                             const card = document.createElement('div');
                             card.className = 'content-card fade-in';
-                            const smallUrl = window.getAssetUrl ? window.getAssetUrl(asset.link_small) : `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? (window.getAssetUrl ? window.getAssetUrl(asset.link_medium) : `/uploads/${asset.link_medium}`) : smallUrl;
+                            const smallUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : `/uploads/${asset.link_small}`;
                             
                             card.innerHTML = `
                                 <div class="user-card-header" onclick="event.stopPropagation(); openUserProfile('${asset.user_id}', '${asset.username}', '${asset.avatar}')">
                                     <img src="${asset.avatar ? e">${asset.username || 'User'}</span>
                                 </div>
                                 <div class="card-img-body">
-                                    <img src="${smallUrl}" data-medium="${mediumUrl}" alt="${asset.name}" class="library-card-img">
+                                    <img src="${smallUrl}" alt="${asset.name}" class="library-card-img">
                                 </div>
                             `;
                             
@@ -97,7 +75,6 @@
                             });
 
                             grid.appendChild(card);
-                            observer.observe(card);
                         });
                     } else {
                         grid.innerHTML = '<div style="color:#888; padding:20px;">No items found</div>';
