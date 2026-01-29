@@ -97,10 +97,11 @@
             min-width: 0; /* Required for flexbox truncation */
         }
         @media (max-width: 768px) {
-            .welcome-title { font-size: 1.5rem !important; line-height: 1.3 !important; }
-            .welcome-text { font-size: 0.9rem !important; line-height: 1.5 !important; }
+            .welcome-title { font-size: 3.4rem !important; line-height: 3.3 !important; }
+            .welcome-text { font-size: 3.3rem !important; line-height: 1.5 !important; }
             .welcome-banner { padding: 25px 15px !important; }
         }
+        
     </style>
 </head>
 
@@ -294,7 +295,7 @@
                         <div style="flex: 1; min-width: 200px;">
                             <p class="section-title" style="margin-left: 0; margin-bottom: 10px; opacity: 1; height: auto;">{{ t('Size') }}</p>
                             <div class="btn-grid icons" id="modalSizeGrid" style="grid-template-columns: repeat(3, 1fr);">
-                                <button class="filter-btn icon-btn" data-value="Horizontal"><img src="/static/icons/Horizontal.png" class="sidebar-icon" alt="Horizontal"><span>monitor</span></button>
+                                <button class="filter-btn icon-btn" data-value="Horizontal"><img src="/static/icons/horizontal.png" class="sidebar-icon" alt="Horizontal"><span>monitor</span></button>
                                 <button class="filter-btn icon-btn" data-value="Vertical"><img src="/static/icons/vertical.png" class="sidebar-icon" alt="Vertical"><span>mobile</span></button>
                                 <button class="filter-btn icon-btn" data-value="Square"><img src="/static/icons/stop-square.png" class="sidebar-icon" alt="Square"><span>tablet</span></button>
                             </div>
@@ -431,7 +432,7 @@
             <p class="section-title" data-i18n="Size">{{ t('Size') }}</p>
             <div class="btn-grid icons" id="sidebarSizeGrid">
                 <button class="filter-btn icon-btn" data-value="Horizontal">
-                    <img src="/static/icons/Horizontal.png" class="sidebar-icon" alt="Horizontal">
+                    <img src="/static/icons/horizontal.png" class="sidebar-icon" alt="Horizontal">
                     <span>desktop</span>
                 </button>
                 <button class="filter-btn icon-btn" data-value="Vertical">
@@ -643,7 +644,16 @@
                         {{ t('Browse thousands of high-quality backgrounds for your iPhone, Android, or Desktop.') }}<br>
                         {{ t('Updated daily with the best aesthetic, dark, and nature images.') }}
                     </p>
-                    <div class="welcome-license" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 15px; color: #4caf50; font-size: 0.95rem; font-weight: 500;">
+                    
+                    <div class="welcome-search-box">
+                        <img src="/static/icons/search.png" class="welcome-search-icon" alt="Search">
+                        <input type="text" class="welcome-search-input" placeholder="{{ t('Search for free photos') }}" data-i18n="Search for free photos" data-i18n-attr="placeholder">
+                        <button type="button" id="welcomeSearchBtn" class="welcome-search-btn">
+                            <img src="/static/icons/search.png" alt="Go">
+                        </button>
+                    </div>
+
+                    <div class="welcome-license" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 25px; color: #4caf50; font-size: 0.95rem; font-weight: 500;">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
                         <span>{{ t('All images are free for personal use') }}</span>
                     </div>
@@ -707,7 +717,7 @@
             loading: false,
             queue: [
                 { type: 'size', value: 'Vertical', title: 'Mobile Wallpapers', icon: 'vertical.png' },
-                { type: 'size', value: 'Horizontal', title: 'Desktop Backgrounds', icon: 'Horizontal.png' },
+                { type: 'size', value: 'Horizontal', title: 'Desktop Backgrounds', icon: 'horizontal.png' },
                 { type: 'size', value: 'Square', title: 'Social & Tablet', icon: 'stop-square.png' }
             ],
             categoryIndex: 0
@@ -1002,6 +1012,28 @@
                 });
             }
             
+            const welcomeSearchInput = document.querySelector('.welcome-search-input');
+            if (welcomeSearchInput) {
+                welcomeSearchInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        if (searchInput) {
+                            searchInput.value = welcomeSearchInput.value;
+                            window.performSearch();
+                        }
+                    }
+                });
+            }
+
+            const welcomeSearchBtn = document.getElementById('welcomeSearchBtn');
+            if (welcomeSearchBtn && welcomeSearchInput) {
+                welcomeSearchBtn.addEventListener('click', () => {
+                    if (searchInput) {
+                        searchInput.value = welcomeSearchInput.value;
+                        window.performSearch();
+                    }
+                });
+            }
+
             // Helper: Levenshtein Distance for fuzzy matching (Orthography)
             function getLevenshteinDistance(a, b) {
                 if (a.length === 0) return b.length;
@@ -1049,6 +1081,16 @@
                 }
                 return term;
             }
+
+            // Helper for image URL logic (PC = Medium, Mobile = Small)
+            window.getGridImageUrl = function(asset) {
+                const isMobile = window.innerWidth <= 768;
+                if (isMobile) {
+                    return `/uploads/${asset.link_small}`;
+                } else {
+                    return asset.link_medium ? `/uploads/${asset.link_medium}` : `/uploads/${asset.link_small}`;
+                }
+            };
 
             window.performSearch = function() {
                 if (!searchInput) return;
@@ -1177,33 +1219,9 @@
                             // Reuse the existing rendering logic by setting the global galleryImages
                             galleryImages = data.assets;
                             
-                            // Create observer for search results
-                            const observer = new IntersectionObserver((entries, obs) => {
-                                entries.forEach(entry => {
-                                    if (entry.isIntersecting) {
-                                        const card = entry.target;
-                                        const img = card.querySelector('img');
-                                        if (img) {
-                                            const mediumUrl = img.getAttribute('data-medium');
-                                            if (mediumUrl) {
-                                                const mediumImg = new Image();
-                                                mediumImg.src = mediumUrl;
-                                                mediumImg.onload = () => {
-                                                    img.src = mediumUrl;
-                                                };
-                                                mediumImg.onerror = () => {
-                                                };
-                                            }
-                                        }
-                                        obs.unobserve(card);
-                                    }
-                                });
-                            }, { rootMargin: "50px" });
-
                             // Instant Load Logic (Parallel)
                             data.assets.forEach((asset, index) => {
-                                const smallUrl = `/uploads/${asset.link_small}`;
-                                const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                                const smallUrl = window.getGridImageUrl(asset);
                                 const arStyle = typeof getAspectRatioStyle === 'function' ? getAspectRatioStyle(asset.resolution) : '';
 
                                 // Random Badge
@@ -1215,7 +1233,7 @@
                                 card.innerHTML = `
                                     ${randomBadge}
                                     <div class="card-img-wrapper" style="${arStyle}">
-                                        <img src="${smallUrl}" data-medium="${mediumUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block;">
+                                        <img src="${smallUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block;">
                                     </div>
                                     <button class="card-action-btn like-btn top-left ${asset.is_liked ? 'active' : ''}" data-id="${asset.id}" data-category="${asset.category_type}" onclick="event.stopPropagation(); toggleLike(this)">
                                     </button>
@@ -1258,8 +1276,6 @@
                                     if(asset.category_type === 'logo') openIconViewer(asset, index, data.assets);
                                     else openImageViewer(asset, index, data.assets);
                                 });
-
-                                observer.observe(card);
                             });
                         }
                     })
@@ -1480,19 +1496,17 @@
             fetch(url)
                 .then(r => r.json())
                 .then(data => {
-                    removeSkeletons(skeletons);
                     homeFeedState.loading = false;
                     
                     if (data.success && data.assets.length > 0) {
                         data.assets.forEach((asset, index) => {
                             // Reuse card creation logic
-                            const smallUrl = `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                            const smallUrl = window.getGridImageUrl(asset);
                             const arStyle = typeof getAspectRatioStyle === 'function' ? getAspectRatioStyle(asset.resolution) : '';
 
                             const card = document.createElement('div');
                             card.className = 'image-card fade-in';
-                            card.innerHTML = `<div class="card-img-wrapper" style="${arStyle}"><img src="${smallUrl}" data-medium="${mediumUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block;"></div><div class="card-overlay"><h3 class="card-title">${asset.name || 'Image'}</h3></div>`;
+                            card.innerHTML = `<div class="card-img-wrapper" style="${arStyle}"><img src="${smallUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block;"></div><div class="card-overlay"><h3 class="card-title">${asset.name || 'Image'}</h3></div>`;
                             
                             // Masonry append logic
                             const cols = grid.querySelectorAll('.gallery-col');
@@ -1507,22 +1521,6 @@
                             card.addEventListener('click', () => {
                                 if(typeof openImageViewer === 'function') openImageViewer(asset, index, data.assets);
                             });
-                            
-                            // Lazy load observer
-                            const observer = new IntersectionObserver((entries, obs) => {
-                                entries.forEach(entry => {
-                                    if (entry.isIntersecting) {
-                                        const img = entry.target.querySelector('img');
-                                        if (img && img.dataset.medium) {
-                                            const mImg = new Image();
-                                            mImg.src = img.dataset.medium;
-                                            mImg.onload = () => img.src = img.dataset.medium;
-                                        }
-                                        obs.unobserve(entry.target);
-                                    }
-                                });
-                            });
-                            observer.observe(card);
                         });
                     } else {
                         section.remove();
@@ -1573,7 +1571,7 @@
             const gap = 24;
             let numCols = Math.floor((grid.clientWidth + gap) / (colWidth + gap));
             if (numCols < 1) numCols = 1;
-            if (window.innerWidth <= 768) numCols = 1; // Force 1 col on mobile
+            if (window.innerWidth <= 768) numCols = 2; // Force 2 cols on mobile
 
             for (let i = 0; i < numCols; i++) {
                 const col = document.createElement('div');
@@ -1680,35 +1678,12 @@
                         if (imageState.offset === 0) galleryImages = data.assets;
                         else galleryImages = [...galleryImages, ...data.assets];
 
-                        // Create a single observer for all cards to improve performance
-                        const observer = new IntersectionObserver((entries, obs) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    const card = entry.target;
-                                    const img = card.querySelector('img');
-                                    const mediumUrl = img.getAttribute('data-medium');
-                                    
-                                    if (mediumUrl) {
-                                        const mediumImg = new Image();
-                                        mediumImg.src = mediumUrl;
-                                        mediumImg.onload = () => {
-                                            img.src = mediumUrl;
-                                        };
-                                        mediumImg.onerror = () => {
-                                        };
-                                    }
-                                    obs.unobserve(card);
-                                }
-                            });
-                        }, { rootMargin: "50px" });
-
                         // Batch Load Logic: Wait for all images to load before displaying
                         const currentBatchOffset = imageState.offset;
 
                         const batchPromises = data.assets.map((asset, index) => {
                             return new Promise((resolve) => {
-                                const smallUrl = `/uploads/${asset.link_small}`;
-                                const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                                const smallUrl = window.getGridImageUrl(asset);
                                 const arStyle = getAspectRatioStyle(asset.resolution);
 
                                 const card = document.createElement('div');
@@ -1716,7 +1691,7 @@
 
                                 card.innerHTML = `
                                     <div class="card-img-wrapper" style="${arStyle}">
-                                        <img src="${smallUrl}" data-medium="${mediumUrl}" alt="Image" style="width: 100%; height: auto; display: block;">
+                                        <img src="${smallUrl}" alt="Image" style="width: 100%; height: auto; display: block;">
                                     </div>
                                     <button class="card-action-btn like-btn top-left ${asset.is_liked ? 'active' : ''}" data-id="${asset.id}" data-category="${asset.category_type}" onclick="event.stopPropagation(); toggleLike(this)">
                                     </button>
@@ -1777,7 +1752,6 @@
                                 card.addEventListener('click', (e) => {
                                     openImageViewer(asset, currentBatchOffset + index, galleryImages);
                                 });
-                                observer.observe(card);
                             });
 
                             // Cleanup unused skeletons
@@ -1844,21 +1818,11 @@
                             const box = document.createElement('div');
                             box.className = 'hero-img-box';
                             
-                            const smallUrl = `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                            const smallUrl = window.getGridImageUrl(asset);
                             
-                            box.innerHTML = `<img src="${smallUrl}" data-medium="${mediumUrl}" alt="Hero Image">`;
+                            box.innerHTML = `<img src="${smallUrl}" alt="Hero Image">`;
                             container.appendChild(box);
                             
-                            const img = box.querySelector('img');
-                            const highRes = new Image();
-                            highRes.src = mediumUrl;
-                            highRes.onload = () => {
-                                img.src = mediumUrl;
-                            };
-                            highRes.onerror = () => {
-                            };
-
                             box.addEventListener('click', () => openImageViewer(asset, index, items));
                         });
                     }
@@ -1899,7 +1863,7 @@
                             const card = document.createElement('div');
                             card.className = 'hero-logo-card';
                             // Use object-fit: cover for images
-                            card.innerHTML = `<img src="/uploads/${asset.link_small}" alt="Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
+                            card.innerHTML = `<img src="${window.getGridImageUrl(asset)}" alt="Image" style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;">`;
                             card.onclick = () => openImageViewer(asset, index, itemsToShow);
                             container.appendChild(card);
                         });
@@ -1931,31 +1895,8 @@
                     if (data.success) {
                         if (data.assets.length < limit) logoState.hasMore = false;
 
-
-                        // Observer for progressive loading
-                        const observer = new IntersectionObserver((entries, obs) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    const card = entry.target;
-                                    const img = card.querySelector('img[data-medium]');
-                                    if (img) {
-                                        const mediumUrl = img.getAttribute('data-medium');
-                                        if (mediumUrl) {
-                                            const mediumImg = new Image();
-                                            mediumImg.src = mediumUrl;
-                                            mediumImg.onload = () => {
-                                                img.src = mediumUrl;
-                                            };
-                                        }
-                                    }
-                                    obs.unobserve(card);
-                                }
-                            });
-                        }, { rootMargin: "50px" });
-
                         data.assets.forEach((asset, index) => {
-                            const smallUrl = `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                            const smallUrl = window.getGridImageUrl(asset);
                             
                             const card = document.createElement('div');
                             card.className = 'image-card logo-card';
@@ -1963,7 +1904,7 @@
                             // Logos often have transparency, so we give them a nice container background
                             card.innerHTML = `
                                 <div class="card-img-wrapper">
-                                    <img src="${smallUrl}" data-medium="${mediumUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block; border-radius: 12px; background: #fff;">
+                                    <img src="${smallUrl}" alt="${asset.name}" style="width: 100%; height: auto; display: block; border-radius: 12px; background: #fff;">
                                 </div>
                                 <button class="card-action-btn like-btn top-left ${asset.is_liked ? 'active' : ''}" data-id="${asset.id}" data-category="${asset.category_type}" onclick="event.stopPropagation(); toggleLike(this)">
                                 </button>
@@ -1981,7 +1922,6 @@
                             card.addEventListener('click', () => {
                                 openIconViewer(asset, index, data.assets);
                             });
-                            observer.observe(card);
                         });
 
                         if (data.assets.length > 0) logoState.offset += data.assets.length;
@@ -2092,14 +2032,13 @@
                         if (data.assets.length < limit) publicProfileState.hasMore = false;
                         
                         data.assets.forEach((asset, index) => {
-                            const smallUrl = `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                            const smallUrl = window.getGridImageUrl(asset);
                             const arStyle = getAspectRatioStyle(asset.resolution);
                             const card = document.createElement('div');
                             card.className = 'image-card fade-in';
                             card.innerHTML = `
                                 <div class="card-img-wrapper" style="${arStyle}">
-                                    <img src="${smallUrl}" data-medium="${mediumUrl}" style="width:100%; height:auto; display:block;">
+                                    <img src="${smallUrl}" style="width:100%; height:auto; display:block;">
                                 </div>
                             `;
                             
@@ -2160,28 +2099,8 @@
                         
                         const featuredList = shuffled.slice(0, Math.max(1, itemCount));
                         
-                        // Create observer for featured images
-                        const observer = new IntersectionObserver((entries, obs) => {
-                            entries.forEach(entry => {
-                                if (entry.isIntersecting) {
-                                    const img = entry.target;
-                                    const mediumUrl = img.getAttribute('data-medium');
-                                    
-                                    if (mediumUrl) {
-                                        const mediumImg = new Image();
-                                        mediumImg.src = mediumUrl;
-                                        mediumImg.onload = () => {
-                                            img.src = mediumUrl;
-                                        };
-                                    }
-                                    obs.unobserve(img);
-                                }
-                            });
-                        }, { rootMargin: "50px" });
-
                         featuredList.forEach((asset, index) => {
-                            const smallUrl = `/uploads/${asset.link_small}`;
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
+                            const smallUrl = window.getGridImageUrl(asset);
 
                             // Create the card element
                             const box = document.createElement('div');
@@ -2191,7 +2110,7 @@
                             if (index === 0) box.classList.add('large-feature');
 
                             box.innerHTML = `
-                                <img src="${smallUrl}" data-medium="${mediumUrl}" alt="Featured">
+                                <img src="${smallUrl}" alt="Featured">
                                 <div class="box-overlay"></div>
                                 <div class="corner-icon-circle" onclick="event.stopPropagation(); window.location.href='/download/${asset.category_type || 'image'}/${asset.id}'">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2203,10 +2122,6 @@
                             `;
 
                             container.appendChild(box);
-
-                            // Observe the new image
-                            const img = box.querySelector('img');
-                            observer.observe(img);
 
                             box.addEventListener('click', () => {
                                 openImageViewer(asset, index, featuredList);
@@ -2782,30 +2697,9 @@
                     }
                     emptyState.style.display = 'none';
                     
-                    // Create observer for lazy loading
-                    const observer = new IntersectionObserver((entries, obs) => {
-                        entries.forEach(entry => {
-                            if (entry.isIntersecting) {
-                                const card = entry.target;
-                                const img = card.querySelector('img[data-medium]');
-                                if (img) {
-                                    const mediumUrl = img.getAttribute('data-medium');
-                                    if (mediumUrl) {
-                                        const mediumImg = new Image();
-                                        mediumImg.src = mediumUrl;
-                                        mediumImg.onload = () => {
-                                            img.src = mediumUrl;
-                                        };
-                                    }
-                                }
-                                obs.unobserve(card);
-                            }
-                        });
-                    }, { rootMargin: "50px" });
-
                     data.assets.forEach(asset => {
                         const card = document.createElement('div');
-                        const smallUrl = `/uploads/${asset.link_small}`;
+                        const smallUrl = window.getGridImageUrl(asset);
                         
                         // Render based on category type
                         if (asset.category_type === 'logo') {
@@ -2822,11 +2716,10 @@
                             card.addEventListener('click', () => openIconViewer(asset, 0, [asset]));
                         } else {
                             // Default to image
-                            const mediumUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : smallUrl;
                             card.className = 'image-card';
                             card.innerHTML = `
                                 <div class="card-img-wrapper">
-                                    <img src="${smallUrl}" data-medium="${mediumUrl}" alt="Image" style="width: 100%; height: auto; display: block;">
+                                    <img src="${smallUrl}" alt="Image" style="width: 100%; height: auto; display: block;">
                                 </div>
                                 <button class="card-action-btn like-btn top-left ${asset.is_liked ? 'active' : ''}" data-id="${asset.id}" data-category="${asset.category_type}" onclick="event.stopPropagation(); toggleLike(this)">
                                 </button>
@@ -2843,7 +2736,6 @@
                                 </div>
                             `;
                             card.addEventListener('click', () => openImageViewer(asset, 0, [asset]));
-                            observer.observe(card);
                         }
                         grid.appendChild(card);
                     });
