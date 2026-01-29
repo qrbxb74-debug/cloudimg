@@ -6,7 +6,6 @@ import random
 import json
 import difflib
 import re
-from werkzeug.middleware.proxy_fix import ProxyFix
 import threading
 import logging
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, session, g, send_file, Response
@@ -14,6 +13,7 @@ from functools import wraps
 from werkzeug.utils import secure_filename
 from werkzeug.datastructures import FileStorage
 from werkzeug.security import generate_password_hash
+from werkzeug.middleware.proxy_fix import ProxyFix
 from PIL import Image
 from user_manager import UserManager
 from visual import VisualRecognizer
@@ -822,7 +822,7 @@ def process_and_save_image(src_path, dest_folder, filename, mode='image'):
                 # Small (WebP) - Optimized for thumbnails
                 rgb_im.thumbnail((1024, 1024))
                 res['link_small'] = 'small_' + base_name + '.webp'
-                rgb_im.save(os.path.join(dest_folder, res['link_small']), 'WEBP', quality=80)
+                rgb_im.save(os.path.join(dest_folder, res['link_small']), 'WEBP', quality=60)
             else: # logo
                 # Medium (WebP) - Process larger first to maintain quality
                 img.thumbnail((1024, 1024))
@@ -891,9 +891,17 @@ def prepare_images_for_r2(src_path, base_filename):
             small_name = f"small_{base_name_no_ext}.webp"
             small_path = os.path.join(directory, small_name)
             rgb_im.thumbnail((1024, 1024))
-            rgb_im.save(small_path, 'WEBP', quality=80)
+            rgb_im.save(small_path, 'WEBP', quality=60)
             paths['small'] = small_path
             paths['filename_small'] = small_name
+
+            # Tiny (Mobile Optimized)
+            tiny_name = f"tiny_{base_name_no_ext}.webp"
+            tiny_path = os.path.join(directory, tiny_name)
+            rgb_im.thumbnail((400, 400))
+            rgb_im.save(tiny_path, 'WEBP', quality=60)
+            paths['tiny'] = tiny_path
+            paths['filename_tiny'] = tiny_name
             
     except Exception as e:
         print(f"Error preparing images: {e}")
@@ -966,11 +974,14 @@ def upload_file():
                     upload_to_r2(prep_res['medium'], prep_res['filename_medium'])
                 if prep_res['small'] and prep_res['small'] != prep_res['original']:
                     upload_to_r2(prep_res['small'], prep_res['filename_small'])
+                if prep_res.get('tiny'):
+                    upload_to_r2(prep_res['tiny'], prep_res['filename_tiny'])
             
             # Cleanup local temp files immediately
             if os.path.exists(file_path): os.remove(file_path)
             if prep_res['medium'] and os.path.exists(prep_res['medium']): os.remove(prep_res['medium'])
             if prep_res['small'] and os.path.exists(prep_res['small']): os.remove(prep_res['small'])
+            if prep_res.get('tiny') and os.path.exists(prep_res['tiny']): os.remove(prep_res['tiny'])
 
             # Save to Pending DB for persistence
             try:
@@ -1147,6 +1158,19 @@ def publish_file():
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     """Serves an uploaded file."""
+    # Handle Tiny Request (Mobile Optimization)
+    if request.args.get('size') == 'tiny':
+        base = filename
+        if base.startswith('small_'): base = base[6:]
+        elif base.startswith('medium_'): base = base[7:]
+        
+        base_no_ext = os.path.splitext(base)[0]
+        tiny_filename = f"tiny_{base_no_ext}.webp"
+        
+        # We attempt to serve the tiny version. If it doesn't exist (old uploads), 
+        # the frontend onerror handler will fallback to the original request.
+        filename = tiny_filename
+
     # 0. Proxy Mode (For Editor/Canvas CORS)
     if request.args.get('proxy') == '1' and s3_client and R2_BUCKET_NAME:
         try:
@@ -2006,7 +2030,10 @@ def sitemap():
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             # Get latest 1000 items per category
-            cursor.execute("SELECT id, name, link_small FROM uploads ORDER BY upload_date DESC LIMIT 1000")
+            # Fetch upload_date and higher quality image link for better SEO
+            cursor.execute("SELECT id, name, link_medium, link_original, upload_date FROM uploads ORDER BY upload_date DESC LIMIT 1000")
+            # Fetch upload_date and small quality image link (User preference)
+            cursor.execute("SELECT id, name, link_small, upload_date FROM uploads ORDER BY upload_date DESC LIMIT 1000")
             rows = cursor.fetchall()
             conn.close()
             
@@ -2015,10 +2042,19 @@ def sitemap():
                 safe_slug = slugify(row[1])
                 loc = f"{host}/view/{cat}/{row[0]}/{safe_slug}"
                 # The Image URL (Direct File)
-                img_loc = f"{R2_DOMAIN}/{row[2]}" if R2_DOMAIN else f"{host}/uploads/{row[2]}"
+                # Prefer Medium quality for balance of speed/quality, fallback to Original
+                img_file = row[2] if row[2] else row[3]
+                img_file = row[2]
+                img_loc = f"{R2_DOMAIN}/{img_file}" if R2_DOMAIN else f"{host}/uploads/{img_file}"
+                
+                # Last Modified Date
+                lastmod = time.strftime('%Y-%m-%d', time.localtime(row[4])) if row[4] else None
+                lastmod = time.strftime('%Y-%m-%d', time.localtime(row[3])) if row[3] else None
                 
                 xml.append('<url>')
                 xml.append(f'<loc>{loc}</loc>')
+                if lastmod:
+                    xml.append(f'<lastmod>{lastmod}</lastmod>')
                 xml.append('<image:image>')
                 xml.append(f'<image:loc>{img_loc}</image:loc>')
                 if row[1]:
@@ -3275,4 +3311,3 @@ if __name__ == '__main__':
     # Only enable debug if explicitly set in environment (Default: False for safety)
     debug_mode = os.environ.get('FLASK_DEBUG', 'False').lower() == 'true'
     app.run(debug=debug_mode, host='0.0.0.0', use_reloader=False)
-
