@@ -3341,7 +3341,7 @@ input:checked + .slider:before {
             text-shadow: 0 10px 30px rgba(61, 133, 255, 0.3);
         }
         .welcome-text {
-            font-size: 3.1rem;
+            font-size: 1.1rem;
             color: #dedede;
             max-width: 600px;
             margin: 0 auto;
@@ -3650,3 +3650,4 @@ input:checked + .slider:before {
     transition: 0.2s;
 }
 .report-btn-cancel:hover { background: var(--hover-bg); }
+
