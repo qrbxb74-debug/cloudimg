@@ -1,0 +1,514 @@
+<div class="settings-wrapper">
+    <button class="close-settings-btn" onclick="closeSettings()" style="color: var(--text-primary);" aria-label="Close settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+    <div class="settings-nav">
+        <div class="settings-title desktop-only" style="color: var(--text-primary);">Settings</div>
+        <button class="set-nav-item {% if session.get('user_id') %}active{% endif %}" onclick="{% if session.get('user_id') %}switchTab('account'){% else %}closeSettings(); document.querySelector('.signup-trigger').click();{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg> Account
+        </button>
+        <button class="set-nav-item {% if not session.get('user_id') %}active{% endif %}" onclick="switchTab('appearance')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="14.31" y1="8" x2="20.05" y2="17.94"></line><line x1="9.69" y1="8" x2="21.17" y2="8"></line><line x1="7.38" y1="12" x2="13.12" y2="2.06"></line><line x1="9.69" y1="16" x2="3.95" y2="6.06"></line><line x1="14.31" y1="16" x2="2.83" y2="16"></line><line x1="16.62" y1="12" x2="10.88" y2="21.94"></line></svg> Appearance
+        </button>
+        <button class="set-nav-item" onclick="{% if session.get('user_id') %}switchTab('notifications'){% else %}closeSettings(); document.querySelector('.signup-trigger').click();{% endif %}">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg> Notifications
+        </button>
+        <button class="set-nav-item" onclick="switchTab('about')">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> About
+        </button>
+    </div>
+
+    <div class="settings-main">
+        <!-- Account Tab -->
+        <div id="set-tab-account" class="set-panel {% if session.get('user_id') %}active{% endif %}">
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Profile Information</h3>
+                <div class="profile-edit-row">
+                    <div class="set-avatar" onclick="document.getElementById('avatarUpload').click()">
+                        <img src="{{ (avatar if avatar.startswith('/static/') else '/static/avatars/' + avatar) if avatar else 'https://via.placeholder.com/100' }}" id="settingsAvatarPreview" alt="Avatar">
+                        <div class="avatar-overlay">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                        </div>
+                        <input type="file" id="avatarUpload" hidden accept="image/*" onchange="previewAvatar(this)">
+                    </div>
+                    <div class="set-inputs">
+                        <div class="input-group">
+                            <label>Display Name</label>
+                            <input type="text" id="settingsUsername" value="{{ username }}" placeholder="Your Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Email Address</label>
+                            <input type="email" value="{{ email }}" disabled style="opacity: 0.7; cursor: not-allowed;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Bio</label>
+                    <textarea id="settingsBio" rows="3" placeholder="Tell us about yourself...">{{ bio }}</textarea>
+                </div>
+
+                <h3 style="color: var(--text-primary); margin-top: 30px; font-size: 1rem;">Social & Contact</h3>
+                <div class="input-group">
+                    <label>Website Link</label>
+                    <input type="url" id="settingsWebsite" value="{{ website }}" placeholder="https://your-portfolio.com">
+                </div>
+                <div class="input-group">
+                    <label>Instagram Username</label>
+                    <input type="text" id="settingsInstagram" value="{{ instagram }}" placeholder="@username">
+                </div>
+                <div class="input-group">
+                    <label>Twitter / X Username</label>
+                    <input type="text" id="settingsTwitter" value="{{ twitter }}" placeholder="@username">
+                </div>
+                <div class="input-group">
+                    <label>Public Contact Email</label>
+                    <input type="email" id="settingsContactEmail" value="{{ contact_email }}" placeholder="contact@example.com">
+                </div>
+            </div>
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Change Password</h3>
+                <div class="input-group">
+                    <label>Current Password</label>
+                    <input type="password" id="settingsCurrentPass" placeholder="••••••••">
+                </div>
+                <div class="input-group">
+                    <label>New Password</label>
+                    <input type="password" id="settingsNewPass" placeholder="••••••••">
+                </div>
+                <button class="btn-primary" style="margin-top: 10px; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary);" onclick="updateSettingsPassword(this)">Update Password</button>
+            </div>
+            <div class="set-actions">
+                <button class="btn-primary" onclick="saveAccountSettings(this)">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- Appearance Tab -->
+        <div id="set-tab-appearance" class="set-panel {% if not session.get('user_id') %}active{% endif %}">
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Theme Preferences</h3>
+                <div class="toggle-row">
+                    <span style="color: var(--text-primary);">Light Mode</span>
+                    <label class="switch">
+                        <input type="checkbox" id="themeModeToggle" onchange="toggleThemeMode(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Accent Color</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">Choose your primary theme color</p>
+                <div class="theme-grid">
+                    <div class="theme-swatch" style="background: #0a84ff;" onclick="setTheme('#0a84ff', this)"></div>
+                    <div class="theme-swatch" style="background: #ff453a;" onclick="setTheme('#ff453a', this)"></div>
+                    <div class="theme-swatch" style="background: #30d158;" onclick="setTheme('#30d158', this)"></div>
+                    <div class="theme-swatch" style="background: #bf5af2;" onclick="setTheme('#bf5af2', this)"></div>
+                    <div class="theme-swatch" style="background: #ff9f0a;" onclick="setTheme('#ff9f0a', this)"></div>
+                    <div class="theme-swatch" style="background: #64d2ff;" onclick="setTheme('#64d2ff', this)"></div>
+                    <div class="theme-swatch" id="customColorSwatch" style="background: conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #00FF00 120deg, #0000FF 240deg, #FF0000 360deg);">
+                        <input type="color" id="themeColorInput" style="opacity: 0; width: 100%; height: 100%; cursor: pointer; border: none; padding: 0;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="set-tab-notifications" class="set-panel">
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Email Notifications</h3>
+                <div class="toggle-row">
+                    <span style="color: var(--text-primary);">New followers</span>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+                <div class="toggle-row">
+                    <span style="color: var(--text-primary);">Product updates</span>
+                    <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="set-tab-about" class="set-panel">
+            <div class="set-section" style="text-align: center; padding-bottom: 30px;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: #333; margin: 0 auto 15px; overflow: hidden; border: 3px solid var(--primary, #3d85ff);">
+                    <img src="static/owner.jpg" alt="Asanji Bruno" style="width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <h2 style="margin: 0; color: var(--text-primary);">Asanji Bruno</h2>
+                <p style="color: var(--text-secondary); margin: 5px 0 0;">Website Owner & Creator</p>
+            </div>
+
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">About wallpepersphere</h3>
+                <p style="color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem;">
+                    Welcome to wallpepersphere the ultimate destination for high-quality 4K images, logos, and creative assets. Designed for creators, by creators.
+                </p>
+            </div>
+
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">How to Use</h3>
+                <ul style="color: var(--text-secondary); padding-left: 20px; line-height: 1.8; font-size: 0.95rem; margin-top: 10px;">
+                    <li><strong>Explore:</strong> Browse thousands of 4K wallpapers and assets in the library.</li>
+                    <li><strong>Search:</strong> Use the smart search bar with category filters to find exactly what you need.</li>
+                    <li><strong>Customize:</strong> Use the built-in Image Editor to adjust brightness, contrast, and add text.</li>
+                    <li><strong>Upload:</strong> Join the community and share your own creations.</li>
+                </ul>
+            </div>
+
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Legal & Claims</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+                    &copy; 2024 wallpepersphere. All rights reserved.<br>
+                    All content is provided for personal use. Commercial use requires a license.<br>
+                    We claim no ownership over user-uploaded content unless explicitly stated.
+                </p>
+            </div>
+
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Send Feedback</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 15px;">We value your input. Let us know how we can improve.</p>
+                <div class="input-group">
+                    <textarea id="feedbackText" rows="3" placeholder="Type your feedback here..."></textarea>
+                </div>
+                <button class="btn-primary" onclick="sendFeedback()" style="width: 100%;">Send Feedback</button>
+            </div>
+        </div>
+
+        <!-- Report Tab (Hidden from Nav) -->
+        <div id="set-tab-report" class="set-panel">
+            <div class="set-section">
+                <h3 style="color: var(--text-primary);">Report Content</h3>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 20px;">
+                    Please select a reason for reporting this content.
+                </p>
+                
+                <div class="input-group">
+                    <label style="margin-bottom: 10px; display: block;">Reason</label>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: normal; color: var(--text-primary);">
+                            <input type="checkbox" class="report-reason" value="inappropriate" style="width: 18px; height: 18px; accent-color: #ff453a;"> Inappropriate Content
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: normal; color: var(--text-primary);">
+                            <input type="checkbox" class="report-reason" value="copyright" style="width: 18px; height: 18px; accent-color: #ff453a;"> I claim ownership (Copyright)
+                        </label>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Additional Details</label>
+                    <textarea id="reportMessage" rows="4" placeholder="Please provide more information..."></textarea>
+                </div>
+
+                <div class="set-actions">
+                    <button class="btn-primary" onclick="submitSettingsReport(this)" style="background: #ff453a; width: 100%;">Submit Report</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+    .settings-wrapper { display: flex; gap: 30px; max-width: 1000px; margin: 0 auto; padding: 20px; color: var(--text-primary); font-family: 'Inter', sans-serif; height: 80vh; max-height: 750px; }
+    .settings-nav { width: 250px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; }
+    .settings-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 20px; padding-left: 10px; }
+    .close-settings-btn { position: absolute; top: 20px; right: 20px; background: transparent; border: none; color: var(--text-primary); cursor: pointer; z-index: 100; }
+    
+    .set-nav-item { background: transparent; border: none; color: var(--text-primary); padding: 12px 15px; text-align: left; cursor: pointer; border-radius: 8px; font-size: 0.95rem; display: flex; align-items: center; gap: 10px; transition: all 0.2s; }
+    .set-nav-item:hover { background: var(--hover-bg); color: var(--text-primary); }
+    .set-nav-item.active { background: var(--primary); color: #fff; font-weight: 500; }
+    
+    .settings-main { flex: 1; background: var(--bg-surface); border-radius: 16px; border: 1px solid var(--border-color); padding: 30px; overflow-y: auto; min-height: 0; scrollbar-width: thin; scrollbar-color: #444 var(--bg-surface); }
+    .settings-main::-webkit-scrollbar { width: 8px; }
+    .settings-main::-webkit-scrollbar-track { background: transparent; }
+    .settings-main::-webkit-scrollbar-thumb { background-color: #444; border-radius: 20px; border: 2px solid var(--bg-surface); }
+    .set-panel { display: none; animation: fadeIn 0.3s ease; }
+    .set-panel.active { display: block; }
+    
+    .set-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+    .set-section:last-child { border-bottom: none; }
+    .set-section h3 { margin-top: 0; margin-bottom: 20px; font-size: 1.1rem; }
+    
+    .input-group { margin-bottom: 15px; }
+    .input-group label { display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem; }
+    .input-group input, .input-group textarea { width: 100%; background: var(--input-bg); border: 1px solid var(--border-color); color: var(--text-primary); padding: 12px; border-radius: 8px; font-family: inherit; box-sizing: border-box; }
+    .input-group input:focus, .input-group textarea:focus { border-color: #3d85ff; outline: none; }
+    
+    .profile-edit-row { display: flex; gap: 20px; align-items: flex-start; }
+    .set-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--input-bg); position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+    .set-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; opacity: 0; transition: 0.2s; }
+    .set-avatar:hover .avatar-overlay { opacity: 1; }
+    .set-inputs { flex: 1; width: 100%; }
+    
+    .btn-primary { background: #3d85ff; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-weight: 500; transition: 0.2s; }
+    .btn-primary:hover { background: #2a6edb; }
+
+    .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; color: var(--text-primary); }
+    .toggle-switch { width: 44px; height: 24px; background: var(--input-bg); border-radius: 20px; position: relative; cursor: pointer; transition: 0.3s; }
+    .toggle-switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: #fff; border-radius: 50%; transition: 0.3s; }
+    .toggle-switch.active { background: #3d85ff; }
+    .toggle-switch.active::after { transform: translateX(20px); }
+
+    /* New Switch Style for Theme Toggle */
+    .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--input-bg); transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #3d85ff; }
+    input:checked + .slider:before { transform: translateX(24px); }
+
+    /* Color Grid */
+    .theme-grid { display: flex; gap: 15px; flex-wrap: wrap; }
+    .theme-swatch { width: 40px; height: 40px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; }
+    .theme-swatch:hover { transform: scale(1.1); }
+    .theme-swatch.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.2); }
+
+    @media (max-width: 768px) {
+        .settings-wrapper { flex-direction: column; padding: 0; gap: 0; width: 100%; height: 100vh; height: 100dvh; max-width: none; margin: 0; background: var(--bg-body); position: relative; }
+        
+        .settings-nav { 
+            width: 100%; 
+            flex-direction: row; 
+            overflow-x: auto; 
+            padding: 15px 50px 15px 15px; /* Right padding for close button */
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+            gap: 8px;
+            -webkit-overflow-scrolling: touch;
+            position: relative;
+            z-index: 10;
+        }
+        .settings-nav::-webkit-scrollbar { display: none; }
+        
+        .set-nav-item { 
+            white-space: nowrap; 
+            padding: 8px 14px; 
+            background: var(--hover-bg); 
+            border-radius: 20px; 
+            font-size: 0.85rem;
+        }
+        .set-nav-item.active { background: #3d85ff; color: white; }
+        
+        .desktop-only { display: none; }
+        
+        .settings-main { 
+            flex: 1;
+            padding: 20px 15px 80px; 
+            border-radius: 0; 
+            border: none; 
+            background: transparent;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .close-settings-btn { 
+            top: 14px; 
+            right: 10px; 
+            background: var(--input-bg); 
+            width: 32px; 
+            height: 32px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            z-index: 20;
+        }
+        
+        .profile-edit-row { flex-direction: column; align-items: center; text-align: center; gap: 20px; }
+        .set-avatar { width: 100px; height: 100px; margin: 0 auto; }
+        .set-inputs { width: 100%; }
+        
+        .input-group input, .input-group textarea { font-size: 16px; } /* Prevent iOS zoom */
+        
+        /* Small screen adjustments */
+        @media (max-width: 380px) {
+            .settings-nav { padding: 10px 45px 10px 10px; }
+            .set-nav-item { padding: 6px 10px; font-size: 0.8rem; }
+            .settings-main { padding: 15px 10px 60px; }
+            .set-section h3 { font-size: 1rem; }
+        }
+    }
+</style>
+
+<script>
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('settingsAvatarPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.set-nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.set-panel').forEach(p => p.classList.remove('active'));
+        
+        const btn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+        if(btn) btn.classList.add('active');
+        
+        const panel = document.getElementById(`set-tab-${tabId}`);
+        if(panel) panel.classList.add('active');
+    }
+
+    function submitSettingsReport(btn) {
+        const reasons = Array.from(document.querySelectorAll('.report-reason:checked')).map(cb => cb.value);
+        const message = document.getElementById('reportMessage').value;
+        
+        if (reasons.length === 0 && !message.trim()) {
+            alert("Please select a reason or provide details.");
+            return;
+        }
+
+        const originalText = btn.textContent;
+        btn.textContent = 'Submitting...';
+        btn.disabled = true;
+
+        const asset = window.currentReportAsset || {};
+
+        fetch('/api/report', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                asset_id: asset.id,
+                category: asset.category,
+                reasons: reasons,
+                message: message
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if(data.success) {
+                alert('Report submitted successfully.');
+                closeSettings();
+            } else {
+                alert(data.message || 'Failed to submit report');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            alert('Error connecting to server');
+        });
+    }
+
+    function saveAccountSettings(btn) {
+        const username = document.getElementById('settingsUsername').value;
+        const bio = document.getElementById('settingsBio').value;
+        const website = document.getElementById('settingsWebsite').value;
+        const instagram = document.getElementById('settingsInstagram').value;
+        const twitter = document.getElementById('settingsTwitter').value;
+        const contactEmail = document.getElementById('settingsContactEmail').value;
+        const originalText = btn.textContent;
+        
+        btn.textContent = 'Saving...';
+        btn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('bio', bio);
+        formData.append('website', website);
+        formData.append('instagram', instagram);
+        formData.append('twitter', twitter);
+        formData.append('contact_email', contactEmail);
+        
+        const avatarInput = document.getElementById('avatarUpload');
+        if(avatarInput.files[0]) {
+            formData.append('avatar', avatarInput.files[0]);
+        }
+
+        fetch('/update-profile', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            if(data.success) {
+                btn.textContent = 'Saved!';
+                btn.style.backgroundColor = '#4caf50';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.backgroundColor = '';
+                }, 2000);
+            } else {
+                btn.textContent = originalText;
+                alert(data.message || 'Failed to update profile');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            console.error(err);
+            alert('Error connecting to server');
+        });
+    }
+
+    function updateSettingsPassword(btn) {
+        const currentPass = document.getElementById('settingsCurrentPass').value;
+        const newPass = document.getElementById('settingsNewPass').value;
+        
+        if(!newPass) return alert('Please enter a new password');
+        
+        const originalText = btn.textContent;
+        btn.textContent = 'Updating...';
+        btn.disabled = true;
+
+        fetch('/update-profile', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ password: newPass, current_password: currentPass })
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if(data.success) {
+                document.getElementById('settingsCurrentPass').value = '';
+                document.getElementById('settingsNewPass').value = '';
+                alert('Password updated successfully');
+            } else {
+                alert(data.message || 'Failed to update password');
+            }
+        });
+    }
+
+    function sendFeedback() {
+        const text = document.getElementById('feedbackText').value;
+        if(!text.trim()) return alert('Please enter some feedback.');
+        
+        const email = 'qrbxb70@gmail.com';
+        const subject = encodeURIComponent('wallpepersphere Feedback');
+        const body = encodeURIComponent(text);
+        
+        window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+    }
+
+    // Initialize Theme Controls
+    (function() {
+        // Sync Toggle with current mode
+        const currentMode = document.documentElement.getAttribute('data-theme');
+        const modeToggle = document.getElementById('themeModeToggle');
+        if(modeToggle) modeToggle.checked = (currentMode === 'light');
+
+        // Sync Active Color Swatch
+        const currentColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+        const swatches = document.querySelectorAll('.theme-swatch');
+        swatches.forEach(s => {
+            if(s.getAttribute('style').includes(currentColor)) s.classList.add('active');
+        });
+        
+        // Custom Color Input
+        const colorInput = document.getElementById('themeColorInput');
+        if(colorInput) {
+            colorInput.addEventListener('input', (e) => {
+                if(typeof setTheme === 'function') setTheme(e.target.value, document.getElementById('customColorSwatch'));
+            });
+        }
+    })();
+</script>
