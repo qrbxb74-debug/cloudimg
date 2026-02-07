@@ -245,15 +245,7 @@
         // Mobile Optimization: Critical Path
         // Runs immediately to manage section visibility and prevent resource waste
         if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
-        (function() {
-            if (window.innerWidth <= 768) {
-                // Inject critical CSS to hide Home and show Images immediately
-                var style = document.createElement('style');
-                style.id = 'critical-mobile-style';
-                style.textContent = '#section-home { display: none !important; } #section-images { display: block !important; }';
-                (document.head || document.documentElement).appendChild(style);
-            }
-        })();
+        // Mobile restriction removed to allow Home section
     </script>
     
     <div class="sidebar-overlay"></div>
@@ -1926,7 +1918,7 @@
 
         function loadHeroImages() {
             // Optimization: Do not load hero images on mobile to save bandwidth
-            if (window.innerWidth <= 768) return;
+            // if (window.innerWidth <= 768) return; // Restriction removed
 
             const container = document.querySelector('.hero-right');
             // LCP Optimization: If content is already loaded (SSR), do not fetch again
@@ -3508,26 +3500,14 @@
         // Initial Render
         try {
             renderCategoryWidgets();
-            if (window.innerWidth > 768) {
-                // If we are on page > 1, we are already in the images section
-                if (document.getElementById('section-images').style.display === 'block') {
-                    loadImagesContent();
-                } else {
-                    loadHomeContent();
-                }
-            } else {
-                // Mobile Initialization
-                const homeSec = document.getElementById('section-home');
-                const imgSec = document.getElementById('section-images');
-                if (homeSec) homeSec.style.display = 'none';
-                if (imgSec) imgSec.style.display = 'block';
-                
-                // Remove critical style now that JS has taken over
-                const criticalStyle = document.getElementById('critical-mobile-style');
-                if(criticalStyle) criticalStyle.remove();
-                
+            
+            // If we are on page > 1, we are already in the images section
+            if (document.getElementById('section-images').style.display === 'block') {
                 loadImagesContent();
+            } else {
+                loadHomeContent();
             }
+            
         } catch (e) {
             console.error("Initialization Error:", e);
             // Fallback to ensure content is visible even if error occurs
