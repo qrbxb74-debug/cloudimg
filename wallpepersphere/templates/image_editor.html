@@ -1,0 +1,529 @@
+<style>
+    /* Google Fonts Import */
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Caveat&family=Dancing+Script&family=Inter:wght@400;700&family=Lobster&family=Oswald&family=Pacifico&family=Playfair+Display&family=Shadows+Into+Light&family=Zeyada&display=swap');
+
+    /* Editor Modal Overlay */
+    .editor-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.95); z-index: 10000;
+        display: none; justify-content: center; align-items: center;
+        opacity: 0; transition: opacity 0.3s ease;
+    }
+    .editor-overlay.active { display: flex; opacity: 1; }
+    
+    /* Editor Card */
+    .editor-card {
+        background: #141414; width: 95vw; max-width: 1400px; height: 85vh;
+        border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+        padding: 20px; display: flex; gap: 20px; color: #fff;
+        box-shadow: 0 40px 80px rgba(0,0,0,0.6);
+        position: relative;
+    }
+
+    /* Left Side - Canvas/Image */
+    .editor-left {
+        flex: 3; background: #000; border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+        display: flex; align-items: center; justify-content: center;
+        overflow: hidden; position: relative;
+    }
+    
+    .editor-canvas-container {
+        width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+        background-image: radial-gradient(#222 1px, transparent 1px);
+        background-size: 20px 20px;
+    }
+    
+    .editor-canvas-container img {
+        max-width: 95%; max-height: 95%; object-fit: contain;
+        transition: filter 0.1s linear, box-shadow 0.1s linear;
+    }
+
+    /* Right Side - Controls */
+    .editor-right {
+        flex: 1; max-width: 320px; display: flex; flex-direction: column;
+        background: #1c1c1e; border-radius: 16px; padding: 20px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .editor-header {
+        display: flex; justify-content: space-between; align-items: center;
+        margin-bottom: 20px; padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    .editor-header h3 { margin: 0; font-size: 1.1rem; }
+    .reset-btn { background: none; border: none; color: var(--primary, #0a84ff); cursor: pointer; font-size: 0.9rem; font-weight: 500; }
+    .reset-btn:hover { text-decoration: underline; }
+
+    .controls-scroll { flex: 1; overflow-y: auto; padding-right: 5px; scrollbar-width: thin; }
+    
+    /* Custom Scrollbar for Webkit browsers */
+    .controls-scroll::-webkit-scrollbar {
+        width: 8px;
+    }
+    .controls-scroll::-webkit-scrollbar-track {
+        background: transparent; /* Make track invisible */
+    }
+    .controls-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        border: 2px solid transparent; /* Creates padding around thumb */
+        background-clip: content-box;
+    }
+    .controls-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .control-group { margin-bottom: 25px; }
+    .control-label { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 0.9rem; color: #ccc; }
+    
+    .editor-slider {
+        width: 100%; -webkit-appearance: none; height: 6px;
+        background: #3a3a3c; border-radius: 3px; outline: none;
+        transition: background 0.3s;
+    }
+    .editor-slider::-webkit-slider-thumb {
+        -webkit-appearance: none; width: 18px; height: 18px;
+        background: #fff; border: 2px solid var(--primary, #0a84ff);
+        border-radius: 50%; cursor: pointer; transition: all 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+    .editor-slider::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 0 4px rgba(10, 132, 255, 0.2); }
+
+    .filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .filter-chip {
+        background: #2c2c2e; border-radius: 8px; padding: 12px 8px;
+        text-align: center; font-size: 0.8rem; cursor: pointer;
+        border: 1px solid transparent; transition: all 0.2s ease;
+        font-weight: 500;
+    }
+    .filter-chip:hover { background: #3a3a3c; transform: translateY(-2px); }
+    .filter-chip.active {
+        background: var(--primary, #0a84ff); border-color: var(--primary, #0a84ff); color: #fff;
+        box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+    }
+
+    /* Form Controls */
+    .editor-form-control {
+        width: 100%; background: #2c2c2e; border: 1px solid #3a3a3c;
+        color: white; padding: 10px; border-radius: 8px; margin-bottom: 12px;
+        font-family: inherit; font-size: 0.9rem; transition: border-color 0.2s;
+    }
+    .editor-form-control:focus {
+        border-color: var(--primary, #0a84ff); outline: none;
+    }
+
+    .editor-actions {
+        margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1);
+        display: flex; gap: 10px;
+    }
+    .btn-editor {
+        flex: 1; height: 45px; border-radius: 10px; border: none;
+        font-weight: 600; cursor: pointer; transition: 0.2s;
+    }
+    .btn-save { background: var(--primary, #0a84ff); color: white; }
+    .btn-save:hover { filter: brightness(1.1); }
+    .btn-cancel { background: rgba(255,255,255,0.1); color: white; }
+    .btn-cancel:hover { background: rgba(255,255,255,0.2); }
+
+    /* Desktop Only Utility */
+    @media (max-width: 768px) {
+        .desktop-only {
+            display: none !important;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .editor-overlay { padding: 0; background: #000; }
+        .editor-card { 
+            flex-direction: column; 
+            width: 100%; 
+            height: 100%; 
+            max-width: 100%; 
+            max-height: 100%; 
+            padding: 0; 
+            border-radius: 0; 
+            border: none; 
+            gap: 0;
+        }
+        .editor-left { 
+            flex: 1; 
+            height: auto; 
+            width: 100%; 
+            border-radius: 0; 
+            border: none; 
+            background: #000;
+        }
+        .editor-canvas-container img { 
+            width: 100%; 
+            max-width: 100%; 
+            max-height: 100%; 
+            object-fit: contain; 
+            box-shadow: none;
+        }
+        .editor-right { 
+            flex: none; 
+            width: 100%; 
+            max-width: 100%; 
+            height: auto;
+            max-height: 50vh;
+            border-radius: 20px 20px 0 0;
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            background: #141414;
+        }
+    }
+</style>
+
+<div class="editor-overlay" id="imageEditorModal">
+    <div class="editor-card">
+        <div class="editor-left">
+            <div class="editor-canvas-container">
+                <img id="editorPreview" src="" alt="Editing">
+                <div id="textOverlay" style="position: absolute; pointer-events: none; white-space: nowrap; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); display: none;"></div>
+            </div>
+        </div>
+        
+        <div class="editor-right">
+            <div class="editor-header">
+                <h3>Adjustments</h3>
+                <button class="reset-btn" id="editorResetBtn">Reset All</button>
+            </div>
+
+            <div class="controls-scroll">
+                <div class="control-group">
+                    <div class="control-label"><span>Brightness</span><span id="val-brightness">100%</span></div>
+                    <input type="range" class="editor-slider" id="range-brightness" min="0" max="200" value="100">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Contrast</span><span id="val-contrast">100%</span></div>
+                    <input type="range" class="editor-slider" id="range-contrast" min="0" max="200" value="100">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Saturation</span><span id="val-saturate">100%</span></div>
+                    <input type="range" class="editor-slider" id="range-saturate" min="0" max="200" value="100">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Blur</span><span id="val-blur">0px</span></div>
+                    <input type="range" class="editor-slider" id="range-blur" min="0" max="20" value="0">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Shadow</span><span id="val-shadow">50%</span></div>
+                    <input type="range" class="editor-slider" id="range-shadow" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                    <div class="control-label"><span>Filters</span></div>
+                    <div class="filter-grid">
+                        <div class="filter-chip active" data-filter="none">Normal</div>
+                        <div class="filter-chip" data-filter="grayscale(100%)">B&W</div>
+                        <div class="filter-chip" data-filter="sepia(100%)">Sepia</div>
+                        <div class="filter-chip" data-filter="invert(100%)">Invert</div>
+                        <div class="filter-chip" data-filter="hue-rotate(90deg)">Hue</div>
+                        <div class="filter-chip" data-filter="blur(5px)">Blur</div>
+                    </div>
+                </div>
+
+                <!-- Desktop Only Tools -->
+                <div class="desktop-only">
+                    <div class="editor-header" style="margin-top: 30px;">
+                        <h3>Advanced Tools</h3>
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label"><span>Width</span><span id="val-width">100%</span></div>
+                        <input type="range" class="editor-slider" id="range-width" min="10" max="100" value="100">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label"><span>Height</span><span id="val-height">100%</span></div>
+                        <input type="range" class="editor-slider" id="range-height" min="10" max="100" value="100">
+                    </div>
+
+                    <div class="control-group">
+                        <div class="control-label"><span>Text Fusion</span></div>
+                        <input type="text" id="text-input" class="editor-form-control" placeholder="Type text here...">
+                        <select id="text-font" class="editor-form-control">
+                            <option style="font-family: 'Inter', sans-serif;" value="'Inter', sans-serif">Inter (Default)</option>
+                            <option style="font-family: 'Lobster', cursive;" value="'Lobster', cursive">Lobster</option>
+                            <option style="font-family: 'Pacifico', cursive;" value="'Pacifico', cursive">Pacifico</option>
+                            <option style="font-family: 'Caveat', cursive;" value="'Caveat', cursive">Caveat</option>
+                            <option style="font-family: 'Dancing Script', cursive;" value="'Dancing Script', cursive">Dancing Script</option>
+                            <option style="font-family: 'Shadows Into Light', cursive;" value="'Shadows Into Light', cursive">Shadows Into Light</option>
+                            <option style="font-family: 'Bebas Neue', cursive;" value="'Bebas Neue', cursive">Bebas Neue</option>
+                            <option style="font-family: 'Oswald', sans-serif;" value="'Oswald', sans-serif">Oswald</option>
+                            <option style="font-family: 'Playfair Display', serif;" value="'Playfair Display', serif">Playfair Display</option>
+                            <option style="font-family: 'Zeyada', cursive;" value="'Zeyada', cursive">Zeyada</option>
+                        </select>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                            <input type="color" id="text-color" value="#ffffff" style="height: 35px; width: 50px; border: none; background: none; cursor: pointer;">
+                            <input type="range" class="editor-slider" id="text-size" min="10" max="100" value="40" title="Size">
+                        </div>
+                        <div class="control-label"><span>Position X / Y</span></div>
+                        <input type="range" class="editor-slider" id="text-x" min="0" max="100" value="50" style="margin-bottom: 8px;">
+                        <input type="range" class="editor-slider" id="text-y" min="0" max="100" value="50">
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-actions">
+                <button class="btn-editor btn-cancel" id="editorCancelBtn">Cancel</button>
+                <button class="btn-editor btn-save" id="editorSaveBtn">Download</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // R2 CDN Configuration
+    const R2_DOMAIN_EDITOR = "{{ r2_domain }}";
+    function getEditorAssetUrl(filename) {
+        if (!filename) return '';
+        // Use proxy to avoid CORS issues on canvas
+        return `/uploads/${filename}?proxy=1`;
+    }
+
+    {
+        const modal = document.getElementById('imageEditorModal');
+        const preview = document.getElementById('editorPreview');
+        const textOverlay = document.getElementById('textOverlay');
+        
+        const inputs = {
+            brightness: document.getElementById('range-brightness'),
+            contrast: document.getElementById('range-contrast'),
+            saturate: document.getElementById('range-saturate'),
+            blur: document.getElementById('range-blur'),
+            shadow: document.getElementById('range-shadow'),
+            width: document.getElementById('range-width'),
+            height: document.getElementById('range-height'),
+            // Text inputs
+            text: document.getElementById('text-input'),
+            textFont: document.getElementById('text-font'),
+            textColor: document.getElementById('text-color'),
+            textSize: document.getElementById('text-size'),
+            textX: document.getElementById('text-x'),
+            textY: document.getElementById('text-y')
+        };
+        const labels = {
+            brightness: document.getElementById('val-brightness'),
+            contrast: document.getElementById('val-contrast'),
+            saturate: document.getElementById('val-saturate'),
+            blur: document.getElementById('val-blur'),
+            shadow: document.getElementById('val-shadow'),
+            width: document.getElementById('val-width'),
+            height: document.getElementById('val-height')
+        };
+        const filterChips = modal.querySelectorAll('.filter-chip');
+        let currentFilter = 'none';
+        let currentEditingAsset = null;
+
+        function updatePreview() {
+            const b = inputs.brightness.value;
+            const c = inputs.contrast.value;
+            const s = inputs.saturate.value;
+            const bl = inputs.blur.value;
+            const sh = inputs.shadow.value;
+            const w = inputs.width.value;
+            const h = inputs.height.value;
+            
+            labels.brightness.textContent = b + '%';
+            labels.contrast.textContent = c + '%';
+            labels.saturate.textContent = s + '%';
+            labels.blur.textContent = bl + 'px';
+            labels.shadow.textContent = sh + '%';
+            labels.width.textContent = w + '%';
+            labels.height.textContent = h + '%';
+
+            let filterString = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${bl}px)`;
+            if (currentFilter !== 'none') filterString += ` ${currentFilter}`;
+            
+            preview.style.filter = filterString;
+            
+            // Inset Shadow
+            const shadowOpacity = sh / 100;
+            preview.style.boxShadow = `inset 0 0 30px 15px rgba(0,0,0,${shadowOpacity * 0.6})`;
+
+            // Dimensions (Width/Height)
+            preview.style.width = w + '%';
+            preview.style.height = h + '%';
+            // Using 'cover' will "cut" the image to fill the new dimensions, as requested.
+            if (w < 100 || h < 100) {
+                preview.style.objectFit = 'cover';
+            } else {
+                preview.style.objectFit = 'contain';
+            }
+
+            // Text Fusion
+            const textVal = inputs.text.value;
+            if (textVal) {
+                textOverlay.style.display = 'block';
+                textOverlay.textContent = textVal;
+                textOverlay.style.fontFamily = inputs.textFont.value;
+                textOverlay.style.color = inputs.textColor.value;
+                textOverlay.style.fontSize = inputs.textSize.value + 'px';
+                textOverlay.style.left = inputs.textX.value + '%';
+                textOverlay.style.top = inputs.textY.value + '%';
+                textOverlay.style.transform = `translate(-${inputs.textX.value}%, -${inputs.textY.value}%)`;
+            } else {
+                textOverlay.style.display = 'none';
+            }
+        }
+
+        Object.values(inputs).forEach(input => input.addEventListener('input', updatePreview));
+
+        filterChips.forEach(chip => {
+            chip.addEventListener('click', () => {
+                filterChips.forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                currentFilter = chip.dataset.filter;
+                updatePreview();
+            });
+        });
+
+        document.getElementById('editorResetBtn').addEventListener('click', () => {
+            inputs.brightness.value = 100;
+            inputs.contrast.value = 100;
+            inputs.saturate.value = 100;
+            inputs.blur.value = 0;
+            inputs.shadow.value = 50;
+            inputs.width.value = 100;
+            inputs.height.value = 100;
+            inputs.text.value = '';
+            inputs.textFont.selectedIndex = 0;
+            inputs.textX.value = 50;
+            inputs.textY.value = 50;
+            
+            // Reset image styles
+            preview.style.width = '95%';
+            preview.style.height = '95%';
+            preview.style.objectFit = 'contain';
+
+            filterChips.forEach(c => c.classList.remove('active'));
+            filterChips[0].classList.add('active');
+            currentFilter = 'none';
+            updatePreview();
+        });
+
+        document.getElementById('editorCancelBtn').addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+
+        document.getElementById('editorSaveBtn').addEventListener('click', () => {
+            const btn = document.getElementById('editorSaveBtn');
+            const originalText = btn.textContent;
+            btn.textContent = 'Processing...';
+            btn.disabled = true;
+
+            // Allow UI to update before blocking main thread with canvas ops
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // 1. Set canvas dimensions to match the actual image resolution
+                    canvas.width = preview.naturalWidth;
+                    canvas.height = preview.naturalHeight;
+
+                    // 2. Reconstruct the CSS filter string for the Canvas context
+                    const b = inputs.brightness.value;
+                    const c = inputs.contrast.value;
+                    const s = inputs.saturate.value;
+                    const bl = inputs.blur.value;
+                    // Note: We map the slider values to standard CSS filter strings
+                    let filterString = `brightness(${b}%) contrast(${c}%) saturate(${s}%) blur(${bl}px)`;
+                    
+                    if (currentFilter !== 'none') {
+                        filterString += ` ${currentFilter}`;
+                    }
+                    ctx.filter = filterString;
+
+                    // 3. Draw the image with filters
+                    ctx.drawImage(preview, 0, 0, canvas.width, canvas.height);
+
+                    // 4. Draw Text Overlay (if exists)
+                    const textVal = inputs.text.value;
+                    if (textVal) {
+                        ctx.filter = 'none'; // Reset filters so text isn't blurry/colored
+                        
+                        // Scale font size relative to the image height
+                        const scaleFactor = canvas.height / 500; 
+                        const fontSize = inputs.textSize.value * scaleFactor;
+                        
+                        ctx.font = `${fontSize}px ${inputs.textFont.value.replace(/'/g, "")}`;
+                        ctx.fillStyle = inputs.textColor.value;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+
+                        const x = (inputs.textX.value / 100) * canvas.width;
+                        const y = (inputs.textY.value / 100) * canvas.height;
+
+                        ctx.fillText(textVal, x, y);
+                    }
+
+                    // 5. Trigger Download
+                    const link = document.createElement('a');
+                    const safeName = currentEditingAsset && currentEditingAsset.name ? currentEditingAsset.name.replace(/[^a-z0-9]/gi, '_').toLowerCase() : 'image';
+                    link.download = `edited-${safeName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+
+                    btn.textContent = originalText;
+                    btn.disabled = false;
+                }, 50);
+            });
+        });
+
+        // Global function to launch editor
+        window.launchImageEditor = function(asset) {
+            currentEditingAsset = asset;
+            const saveBtn = document.getElementById('editorSaveBtn');
+
+            // 1. Use cached CDN URL for immediate display (Fastest)
+            let cachedUrl;
+            if (typeof window.getAssetUrl === 'function') {
+                cachedUrl = asset.link_medium ? window.getAssetUrl(asset.link_medium) : window.getAssetUrl(asset.link_small);
+            } else {
+                cachedUrl = asset.link_medium ? `/uploads/${asset.link_medium}` : `/uploads/${asset.link_small}`;
+            }
+
+            // Disable CORS for the preview initially to allow CDN image to load without errors
+            preview.removeAttribute('crossOrigin');
+            preview.src = cachedUrl;
+            
+            // Disable save until proxy image loads (to prevent tainted canvas)
+            if(saveBtn) {
+                saveBtn.disabled = true;
+                saveBtn.textContent = 'Loading HQ...';
+            }
+            
+            document.getElementById('editorResetBtn').click(); // Reset state
+            modal.classList.add('active');
+
+            // 2. In the background, load the High-Res version via PROXY
+            const highResImage = new Image();
+            highResImage.crossOrigin = "Anonymous";
+            const proxyMediumUrl = asset.link_medium ? getEditorAssetUrl(asset.link_medium) : getEditorAssetUrl(asset.link_small);
+            const originalUrl = asset.link_original ? getEditorAssetUrl(asset.link_original) : proxyMediumUrl;
+            highResImage.src = originalUrl;
+
+            // 3. When the high-res image finishes loading, swap it into the preview
+            highResImage.onload = () => {
+                if (modal.classList.contains('active')) {
+                    preview.crossOrigin = "Anonymous";
+                    preview.src = highResImage.src;
+                    if(saveBtn) {
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = 'Download';
+                    }
+                }
+            };
+            
+            highResImage.onerror = () => {
+                 if(saveBtn) {
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = 'Download';
+                }
+            };
+        };
+    }
+</script>
