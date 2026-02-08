@@ -198,6 +198,10 @@ queue_manager = UploadQueueManager(visual_recognizer, temp_storage_path=QUEUE_ST
 # Do NOT start the worker in the global scope. It causes issues with Gunicorn's forking model.
 # We will start it lazily on the first request to each worker process.
 
+# Global Semaphore to limit concurrent image processing (Fix for 512MB RAM limit)
+# Allowing only 1 concurrent heavy image process ensures we don't spike over memory limits.
+processing_sem = threading.Semaphore(1)
+
 # ===================================================================================
 #                                 I18N (TRANSLATION) ENGINE
 # ===================================================================================
@@ -1002,6 +1006,7 @@ def prepare_images_for_r2(src_path, base_filename):
             image.save(path, 'WEBP', quality=quality)
 
     try:
+        rgb_im = None
         with Image.open(src_path) as img:
             paths['resolution'] = f"{img.size[0]}x{img.size[1]}"
             long_side = max(img.size)
@@ -1010,37 +1015,45 @@ def prepare_images_for_r2(src_path, base_filename):
             elif long_side >= 1920: paths['quality'] = 'FHD'
             elif long_side >= 1280: paths['quality'] = 'HD'
             
-            # MEMORY OPTIMIZATION: If image is large JPEG, draft it down to save RAM
-            if img.format == 'JPEG' and long_side > 3000:
-                try:
-                    img.draft('RGB', (int(img.size[0]/2), int(img.size[1]/2)))
-                except: pass
+            # MEMORY OPTIMIZATION: Resize BEFORE converting to RGB to save RAM.
+            # We only generate Medium (2048px) and smaller. We do NOT need full resolution in RAM.
+            if long_side > 2048:
+                # Use draft for JPEGs (Fast & Low RAM)
+                if img.format == 'JPEG':
+                    try: img.draft('RGB', (2048, 2048))
+                    except: pass
+                # Force resize the object IN PLACE
+                img.thumbnail((2048, 2048), Image.Resampling.LANCZOS)
 
             rgb_im = img.convert('RGB')
             
-            # Medium
-            medium_name = f"medium_{base_name_no_ext}.webp"
-            medium_path = os.path.join(directory, medium_name)
-            rgb_im.thumbnail((2048, 2048))
-            compress_and_save(rgb_im, medium_path, 100)
-            paths['medium'] = medium_path
-            paths['filename_medium'] = medium_name
-            
-            # Small
-            small_name = f"small_{base_name_no_ext}.webp"
-            small_path = os.path.join(directory, small_name)
-            rgb_im.thumbnail((1024, 1024))
-            compress_and_save(rgb_im, small_path, 40)
-            paths['small'] = small_path
-            paths['filename_small'] = small_name
+        # Medium
+        medium_name = f"medium_{base_name_no_ext}.webp"
+        medium_path = os.path.join(directory, medium_name)
+        rgb_im.thumbnail((2048, 2048))
+        compress_and_save(rgb_im, medium_path, 100)
+        paths['medium'] = medium_path
+        paths['filename_medium'] = medium_name
+        
+        # Small
+        small_name = f"small_{base_name_no_ext}.webp"
+        small_path = os.path.join(directory, small_name)
+        rgb_im.thumbnail((1024, 1024))
+        compress_and_save(rgb_im, small_path, 40)
+        paths['small'] = small_path
+        paths['filename_small'] = small_name
 
-            # Tiny (Mobile Optimized)
-            tiny_name = f"tiny_{base_name_no_ext}.webp"
-            tiny_path = os.path.join(directory, tiny_name)
-            rgb_im.thumbnail((400, 400))
-            compress_and_save(rgb_im, tiny_path, 10)
-            paths['tiny'] = tiny_path
-            paths['filename_tiny'] = tiny_name
+        # Tiny (Mobile Optimized)
+        tiny_name = f"tiny_{base_name_no_ext}.webp"
+        tiny_path = os.path.join(directory, tiny_name)
+        rgb_im.thumbnail((400, 400))
+        compress_and_save(rgb_im, tiny_path, 10)
+        paths['tiny'] = tiny_path
+        paths['filename_tiny'] = tiny_name
+        
+        # Cleanup RAM immediately
+        del rgb_im
+        gc.collect()
             
     except Exception as e:
         print(f"Error preparing images: {e}")
@@ -1082,27 +1095,39 @@ def upload_file():
             # Save to temporary folder first
             file.save(file_path)
 
-            # AI Validation: Ensure file is valid and recognized by Gemini
-            # We skip SVG as it is a vector format not typically handled by Vision models in this context
-            if extension != 'svg':
-                # Create a compressed version for the API to reduce token usage and latency
-                api_thumb_path = os.path.join(TEMP_FOLDER, f"api_thumb_{filename}")
-                
-                try:
-                    with Image.open(file_path) as img:
-                        if img.mode in ('RGBA', 'P'):
-                            img = img.convert('RGB')
-                        img.thumbnail((1024, 1024))
-                        img.save(api_thumb_path, 'JPEG', quality=60)
-                except Exception as e:
-                    print(f"Error creating API thumbnail: {e}")
-
-            # Note: We no longer analyze immediately here. 
-            # We just confirm the upload. Analysis happens in /api/analyze via queue.
+            # --- CRITICAL MEMORY FIX: SERIALIZE PROCESSING ---
+            # We use a semaphore to ensure only 1 heavy image processing task runs at a time.
+            # This prevents OOM errors on 512MB instances when multiple uploads happen.
+            if not processing_sem.acquire(blocking=True, timeout=30):
+                return jsonify({'success': False, 'message': 'Server is busy processing other images. Please try again.'}), 503
             
-            # --- NEW LOGIC: DIRECT R2 UPLOAD ---
-            # Process images (Resize)
-            prep_res = prepare_images_for_r2(file_path, filename)
+            try:
+                # AI Validation: Ensure file is valid and recognized by Gemini
+                # We skip SVG as it is a vector format not typically handled by Vision models in this context
+                if extension != 'svg':
+                    # Create a compressed version for the API to reduce token usage and latency
+                    api_thumb_path = os.path.join(TEMP_FOLDER, f"api_thumb_{filename}")
+                    
+                    try:
+                        with Image.open(file_path) as img:
+                            # MEMORY FIX: Resize BEFORE converting to RGB
+                            img.thumbnail((1024, 1024))
+                            if img.mode in ('RGBA', 'P'):
+                                img = img.convert('RGB')
+                            img.save(api_thumb_path, 'JPEG', quality=60)
+                    except Exception as e:
+                        print(f"Error creating API thumbnail: {e}")
+
+                # Note: We no longer analyze immediately here. 
+                # We just confirm the upload. Analysis happens in /api/analyze via queue.
+                
+                # --- NEW LOGIC: DIRECT R2 UPLOAD ---
+                # Process images (Resize)
+                prep_res = prepare_images_for_r2(file_path, filename)
+            finally:
+                processing_sem.release()
+                gc.collect()
+
             if not prep_res:
                 return jsonify({'success': False, 'message': 'Failed to process image'}), 500
 
