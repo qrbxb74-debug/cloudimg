@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import traceback
 from datetime import datetime
 import vertexai
 from google.auth.exceptions import DefaultCredentialsError
@@ -15,16 +16,15 @@ class VertexGenerator:
         self.temp_folder = temp_folder
         self.model = None
         self.model_name = os.environ.get("VERTEX_MODEL_NAME", "imagen-3.0-generate-001")
-
-        if not self.project_id or self.project_id == "your-gcp-project-id":
-            logging.error("VertexGenerator: GCP_PROJECT_ID is not configured.")
-            return
+        
+        print(f"DEBUG: VertexGenerator initializing. Input project_id: {self.project_id}")
 
         # --- Fix for Render: Load Credentials from Env Var ---
         # Render doesn't support file uploads for secrets easily, so we use an Env Var.
         if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
             creds_json = os.environ.get("GCP_CREDENTIALS_JSON")
             if creds_json:
+                print(f"DEBUG: Found GCP_CREDENTIALS_JSON (Length: {len(creds_json)})")
                 try:
                     # Handle both raw JSON and Base64 encoded JSON
                     try:
@@ -32,20 +32,32 @@ class VertexGenerator:
                     except json.JSONDecodeError:
                         creds_data = json.loads(base64.b64decode(creds_json).decode('utf-8'))
                     
+                    # Auto-detect project_id if missing
+                    if not self.project_id and 'project_id' in creds_data:
+                        self.project_id = creds_data['project_id']
+                        print(f"DEBUG: Auto-detected project_id from credentials: {self.project_id}")
+
                     creds_path = os.path.join(self.temp_folder, "gcp_credentials.json")
                     with open(creds_path, "w") as f:
                         json.dump(creds_data, f)
                     
                     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
-                    logging.info(f"VertexGenerator: Credentials loaded from GCP_CREDENTIALS_JSON to {creds_path}")
+                    print(f"DEBUG: Credentials loaded from GCP_CREDENTIALS_JSON to {creds_path}")
                 except Exception as e:
-                    logging.error(f"VertexGenerator: Failed to process GCP_CREDENTIALS_JSON: {e}")
+                    print(f"ERROR: VertexGenerator: Failed to process GCP_CREDENTIALS_JSON: {e}")
+                    traceback.print_exc()
+            else:
+                print("DEBUG: GCP_CREDENTIALS_JSON not found in environment.")
+
+        if not self.project_id or self.project_id == "your-gcp-project-id":
+            print("ERROR: VertexGenerator: GCP_PROJECT_ID is not configured and could not be extracted from credentials.")
+            return
 
         # This relies on GOOGLE_APPLICATION_CREDENTIALS env var being set
         try:
             vertexai.init(project=self.project_id, location=self.location)
             self.model = ImageGenerationModel.from_pretrained(self.model_name)
-            logging.info(f"Vertex AI ImageGen initialized successfully for project: {self.project_id}")
+            print(f"SUCCESS: Vertex AI ImageGen initialized successfully for project: {self.project_id}")
         except DefaultCredentialsError:
             logging.critical("\n\n❌ VERTEX CREDENTIALS MISSING ❌\n"
                              "You must set up Application Default Credentials for the server.\n"
@@ -55,7 +67,8 @@ class VertexGenerator:
                              "4. Set the environment variable 'GOOGLE_APPLICATION_CREDENTIALS' to the path of that JSON file.\n"
                              "The app will not be ableto generate images until this is done.\n\n")
         except Exception as e:
-            logging.error(f"Failed to initialize Vertex AI: {e}")
+            print(f"ERROR: Failed to initialize Vertex AI: {e}")
+            traceback.print_exc()
 
     def generate_image(self, prompt, aspect_ratio="1:1", user_id="anon"):
         if not self.model:
