@@ -1,4 +1,6 @@
 import os
+import json
+import base64
 from datetime import datetime
 import vertexai
 from google.auth.exceptions import DefaultCredentialsError
@@ -17,6 +19,27 @@ class VertexGenerator:
         if not self.project_id or self.project_id == "your-gcp-project-id":
             logging.error("VertexGenerator: GCP_PROJECT_ID is not configured.")
             return
+
+        # --- Fix for Render: Load Credentials from Env Var ---
+        # Render doesn't support file uploads for secrets easily, so we use an Env Var.
+        if not os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+            creds_json = os.environ.get("GCP_CREDENTIALS_JSON")
+            if creds_json:
+                try:
+                    # Handle both raw JSON and Base64 encoded JSON
+                    try:
+                        creds_data = json.loads(creds_json)
+                    except json.JSONDecodeError:
+                        creds_data = json.loads(base64.b64decode(creds_json).decode('utf-8'))
+                    
+                    creds_path = os.path.join(self.temp_folder, "gcp_credentials.json")
+                    with open(creds_path, "w") as f:
+                        json.dump(creds_data, f)
+                    
+                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = creds_path
+                    logging.info(f"VertexGenerator: Credentials loaded from GCP_CREDENTIALS_JSON to {creds_path}")
+                except Exception as e:
+                    logging.error(f"VertexGenerator: Failed to process GCP_CREDENTIALS_JSON: {e}")
 
         # This relies on GOOGLE_APPLICATION_CREDENTIALS env var being set
         try:
