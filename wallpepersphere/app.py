@@ -4021,7 +4021,7 @@ def admin_indexing_submit():
             return jsonify({'success': True, 'message': 'All URLs are already indexed!', 'count': 0})
 
         # Batch (Limit to Quota)
-        batch_size = min(len(pending), quota_left, 100)
+        batch_size = min(len(pending), quota_left, 100) # Keep 100, batching makes it fast
         batch = pending[:batch_size]
     
     credentials = get_indexing_credentials()
@@ -4030,14 +4030,26 @@ def admin_indexing_submit():
 
     try:
         service = build("indexing", "v3", credentials=credentials)
+        batch_request = service.new_batch_http_request()
+        
+        # Track results from callback
+        results = {'success': 0, 'errors': 0}
+        
+        def batch_callback(request_id, response, exception):
+            if exception:
+                print(f"Indexing Error for {request_id}: {exception}")
+                results['errors'] += 1
+            else:
+                history[request_id] = time.time()
+                results['success'] += 1
         
         for url in batch:
             content = {"url": url, "type": "URL_UPDATED"}
-            service.urlNotifications().publish(body=content).execute()
-            history[url] = time.time()
+            batch_request.add(service.urlNotifications().publish(body=content), callback=batch_callback, request_id=url)
             
+        batch_request.execute()
         save_indexing_history(history)
-        return jsonify({'success': True, 'message': f'Successfully submitted {len(batch)} URLs.', 'count': len(batch)})
+        return jsonify({'success': True, 'message': f"Batch complete: {results['success']} sent, {results['errors']} failed.", 'count': results['success']})
         
     except HttpError as e:
         # Parse Google's JSON error response
@@ -4091,10 +4103,16 @@ def admin_indexing_check_status():
         try:
             error_content = json.loads(e.content.decode('utf-8'))
             error_msg = error_content.get('error', {}).get('message', str(e))
+            code = error_content.get('error', {}).get('code', e.resp.status)
         except:
             error_msg = str(e)
+            code = e.resp.status
 
-        return jsonify({'success': False, 'message': f"Google API Error: {error_msg}"}), e.resp.status
+        # Handle 404 (Not Found) gracefully
+        if code == 404:
+            return jsonify({'success': False, 'message': "URL is NOT in Google Index yet (or hasn't been submitted)."}), 404
+
+        return jsonify({'success': False, 'message': f"Google API Error: {error_msg}"}), code
 
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
