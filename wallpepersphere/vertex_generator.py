@@ -18,10 +18,6 @@ class VertexGenerator:
         self.model = None
         self.model_name = os.environ.get("VERTEX_MODEL_NAME", "imagen-3.0-generate-001")
 
-        if not self.project_id or self.project_id == "your-gcp-project-id":
-            logging.error("VertexGenerator: GCP_PROJECT_ID is not configured.")
-            return
-
         # This relies on GOOGLE_APPLICATION_CREDENTIALS env var being set
         # Initialize Credentials
         credentials = None
@@ -38,10 +34,20 @@ class VertexGenerator:
                 print(f"VertexGenerator: Loading Creds for {client_email} | Key ID: {key_id}")
                 
                 credentials = service_account.Credentials.from_service_account_info(info)
+                
+                # If project_id wasn't set via env var, try to get it from the credentials JSON
+                if not self.project_id or self.project_id == "your-gcp-project-id":
+                    self.project_id = info.get("project_id")
+                    logging.info(f"VertexGenerator: Extracted project_id '{self.project_id}' from JSON credentials.")
+
                 logging.info("VertexGenerator: Loaded credentials from JSON env var.")
             except Exception as e:
                 logging.error(f"VertexGenerator: Failed to load JSON credentials: {e}")
                 print(f"VertexGenerator Error: JSON parsing failed - {e}", file=sys.stderr)
+
+        if not self.project_id or self.project_id == "your-gcp-project-id":
+            logging.error("VertexGenerator: GCP_PROJECT_ID is not configured.")
+            return
 
         try:
             if credentials:
