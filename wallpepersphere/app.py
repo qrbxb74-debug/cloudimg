@@ -3956,6 +3956,24 @@ def admin_indexing_status():
         'submitted_24h': count_last_24h
     })
 
+def get_indexing_credentials():
+    """Helper to get Google Credentials for Indexing API from Env or File."""
+    scopes = ["https://www.googleapis.com/auth/indexing"]
+    
+    # 1. Try JSON Content from Env
+    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    if creds_json:
+        try:
+            return service_account.Credentials.from_service_account_info(json.loads(creds_json), scopes=scopes)
+        except Exception as e:
+            print(f"Error parsing GOOGLE_CREDENTIALS_JSON: {e}")
+
+    # 2. Try File Path
+    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    if creds_file and os.path.exists(creds_file):
+        return service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
+    return None
+
 @app.route('/api/admin/indexing/submit', methods=['POST'])
 @admin_required
 def admin_indexing_submit():
@@ -4003,25 +4021,14 @@ def admin_indexing_submit():
             return jsonify({'success': True, 'message': 'All URLs are already indexed!', 'count': 0})
 
         # Batch (Limit to Quota)
-        batch_size = min(len(pending), quota_left, 200)
+        batch_size = min(len(pending), quota_left, 100)
         batch = pending[:batch_size]
     
-    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    
-    if not creds_file or not os.path.exists(creds_file):
-        return jsonify({'success': False, 'message': 'Service Account Credentials not found on server.'}), 500
-
-    # Extract email for better error messages
-    client_email = "Unknown Service Account"
-    try:
-        with open(creds_file, 'r') as f:
-            client_email = json.load(f).get('client_email', client_email)
-    except: pass
+    credentials = get_indexing_credentials()
+    if not credentials:
+        return jsonify({'success': False, 'message': 'Credentials not found. Set GOOGLE_CREDENTIALS_JSON env var.'}), 500
 
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            creds_file, scopes=["https://www.googleapis.com/auth/indexing"]
-        )
         service = build("indexing", "v3", credentials=credentials)
         
         for url in batch:
@@ -4067,15 +4074,11 @@ def admin_indexing_check_status():
     if not url.startswith(('http://', 'https://')):
         url = f'https://{url}'
 
-    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    
-    if not creds_file or not os.path.exists(creds_file):
-        return jsonify({'success': False, 'message': 'Service Account Credentials not found on server.'}), 500
+    credentials = get_indexing_credentials()
+    if not credentials:
+        return jsonify({'success': False, 'message': 'Credentials not found. Set GOOGLE_CREDENTIALS_JSON env var.'}), 500
 
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            creds_file, scopes=["https://www.googleapis.com/auth/indexing"]
-        )
         service = build("indexing", "v3", credentials=credentials)
         
         # Call getMetadata
