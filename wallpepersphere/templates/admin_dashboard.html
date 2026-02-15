@@ -680,13 +680,16 @@
 
             // Update UI with AI Data
             item.querySelector('.file-inputs').innerHTML = `
-                <input type="text" class="input name-input" placeholder="Title" value="${name}">
-                <input type="text" class="input tags-input" placeholder="Keywords" value="${keywords}">
+                <input type="text" class="input name-input" placeholder="Title">
+                <input type="text" class="input tags-input" placeholder="Keywords">
                 <select class="input cat-input">
-                    <option value="image" ${category.toLowerCase() !== 'logo' ? 'selected' : ''}>Image</option>
-                    <option value="logo" ${category.toLowerCase() === 'logo' ? 'selected' : ''}>Logo</option>
+                    <option value="image">Image</option>
+                    <option value="logo">Logo</option>
                 </select>
             `;
+            item.querySelector('.name-input').value = name;
+            item.querySelector('.tags-input').value = Array.isArray(keywords) ? keywords.join(', ') : keywords;
+            item.querySelector('.cat-input').value = category.toLowerCase() === 'logo' ? 'logo' : 'image';
 
             const statusDiv = item.lastElementChild;
             statusDiv.innerHTML = `<div style="color:#4caf50; margin-bottom:5px;">Analyzed</div><button class="btn-sm btn-danger" onclick="removePending('${upRes.filename}', this)">X</button>`;
@@ -744,7 +747,7 @@
         item.innerHTML = `
             <div class="file-preview" style="color:#4caf50">✓</div>
             <div class="file-inputs">
-                <input type="text" class="input name-input" placeholder="Title" value="${displayName}">
+                <input type="text" class="input name-input" placeholder="Title">
                 <input type="text" class="input tags-input" placeholder="Keywords (comma separated)">
                 <select class="input cat-input">
                     <option value="image">Image</option>
@@ -756,6 +759,7 @@
                 <button class="btn-sm btn-danger" onclick="removePending('${file.filename}', this)">X</button>
             </div>
         `;
+        item.querySelector('.name-input').value = displayName;
         document.getElementById('fileList').appendChild(item);
         
         pendingFiles.push({
@@ -962,7 +966,6 @@ Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL h
 
         let matchCount = 0;
         let unmatchedCount = 0;
-        let dbUpdates = [];
         let publishPromises = [];
 
         // Helper to get base name for loose matching
@@ -1069,19 +1072,6 @@ Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL h
                     unmatchedCount++;
                 }
             }
-        }
-
-        // Send DB Updates
-        if (dbUpdates.length > 0) {
-            fetch('/api/admin/bulk_update_metadata', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(dbUpdates)
-            })
-            .then(r => r.json())
-            .then(data => {
-                // DB Updates processed
-            });
         }
 
         // Wait for all publishes to complete
@@ -1394,6 +1384,11 @@ Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL h
             } else {
                 resultBox.innerHTML = `<div style="color:#ef4444; font-weight:bold;">❌ ${data.message}</div>`;
             }
+        })
+        .catch(e => {
+            resultBox.innerHTML = `<div style="color:#ef4444;">Error: ${e.message}</div>`;
+        });
+    }
     
 
     // --- REPORTS ---
@@ -1447,5 +1442,4 @@ Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL h
 </script>
 
 </body>
-</html>
 </html>
