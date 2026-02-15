@@ -1,0 +1,1103 @@
+<!-- templates/image_generator.html -->
+<style>
+    /* --- AI GENERATOR STYLES --- */
+    .generator-container {
+        --ai-primary: #8b5cf6;
+        --ai-secondary: #ec4899;
+        --ai-blue: #3b82f6;
+        --ai-panel-bg: rgba(255, 255, 255, 0.03);
+        --ai-border: rgba(255, 255, 255, 0.1);
+        --ai-text-main: #f9fafb;
+        --ai-text-muted: #9ca3af;
+
+        /* New layout vars */
+        --controls-width: 420px;
+        --results-width: 1fr;
+
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px 0;
+        font-family: 'Inter', sans-serif;
+    }
+
+    [data-theme="light"] .generator-container {
+        --ai-panel-bg: #ffffff;
+        --ai-border: #e5e7eb;
+        --ai-text-main: #1f2937;
+        --ai-text-muted: #6b7280;
+    }
+
+    .generator-header { text-align: center; margin-bottom: 40px; }
+    .generator-header h2 {
+        font-size: 2.5rem; font-weight: 800; margin: 0 0 10px;
+        background: linear-gradient(135deg, var(--ai-primary) 0%, var(--ai-secondary) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .generator-header p { font-size: 1.1rem; color: var(--ai-text-muted); margin: 0; }
+
+    /* --- Aspect Ratio Buttons --- */
+    .aspect-ratio-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+        gap: 12px;
+    }
+    .aspect-ratio-btn {
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--ai-text-muted);
+    }
+    .aspect-ratio-btn:hover {
+        transform: translateY(-3px);
+        border-color: var(--ai-primary);
+        color: var(--ai-text-main);
+    }
+    .aspect-ratio-btn.active {
+        border-color: var(--ai-primary);
+        background: rgba(139, 92, 246, 0.1);
+        color: var(--ai-text-main);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+    .aspect-ratio-btn svg { width: 24px; height: 32px; }
+
+    .generator-form-panel {
+        background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-border);
+        border-radius: 16px;
+        padding: 30px;
+    }
+
+    .form-group { margin-bottom: 25px; }
+    .form-group label { display: block; font-weight: 500; color: var(--ai-text-main); margin-bottom: 8px; font-size: 0.9rem; }
+    
+    .prompt-textarea, .aspect-ratio-select {
+        width: 100%;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 12px 15px;
+        color: var(--text-primary);
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+    }
+    .prompt-textarea:focus, .aspect-ratio-select:focus {
+        outline: none;
+        border-color: var(--ai-primary);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+    .prompt-textarea { resize: vertical; min-height: 100px; }
+
+    .generate-button {
+        width: 100%;
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: linear-gradient(135deg, var(--ai-blue) 0%, var(--ai-primary) 50%, var(--ai-secondary) 100%);
+        background-size: 250% 250%;
+        transition: all 0.4s ease;
+        animation: ai-gradient-anim 4s ease infinite;
+    }
+    .generate-button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.3);
+    }
+    .generate-button:disabled {
+        background: var(--border-color);
+        color: var(--ai-text-muted);
+        cursor: not-allowed;
+        animation: none;
+    }
+
+    /* --- NEW SPLIT VIEW LAYOUT --- */
+    #generator-workspace {
+        display: block; /* Default single column */
+    }
+
+    /* Initial State: Side by Side Controls (Input + Info) */
+    @media (min-width: 801px) {
+        .generator-controls {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 40px;
+            align-items: start;
+        }
+
+        #generator-workspace.split-view-active {
+            display: grid;
+            grid-template-columns: var(--controls-width) var(--results-width);
+            gap: 30px;
+            align-items: flex-start;
+        }
+        
+        #generator-workspace.split-view-active .generator-controls {
+            display: block; /* Stack content in the narrow column */
+        }
+
+        #generator-workspace.split-view-active .generator-info-cards {
+            display: none; /* Hide info cards in split view to save space */
+        }
+
+        .generated-image-wrapper {
+            max-width: 480px; /* Reduce image size in PC view */
+        }
+    }
+
+    .generator-results-area {
+        display: none; /* Hidden by default */
+        animation: fadeIn 0.5s ease;
+    }
+
+    .generation-history-container {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid var(--ai-border);
+    }
+    .generation-history-container h4 {
+        margin: 0 0 15px;
+        color: var(--ai-text-muted);
+        font-size: 0.9rem;
+    }
+    #generation-history-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+    }
+    .history-item {
+        aspect-ratio: 1 / 1;
+        border-radius: 8px;
+        overflow: hidden;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .history-item:hover {
+        transform: scale(1.05);
+        border-color: var(--ai-primary);
+    }
+    .history-item.active {
+        border-color: var(--ai-primary);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+    .history-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .history-item .delete-history-btn {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        line-height: 1;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .history-item:hover .delete-history-btn {
+        opacity: 1;
+    }
+
+    /* Info Cards */
+    .generator-info-cards { display: flex; flex-direction: column; gap: 20px; }
+    .info-card {
+        background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-border);
+        border-radius: 16px;
+        padding: 20px;
+    }
+    .info-card h4 {
+        margin: 0 0 10px; font-size: 1rem; font-weight: 600;
+        color: var(--ai-text-main); display: flex; align-items: center; gap: 8px;
+    }
+    .info-card p, .info-card li { font-size: 0.85rem; color: var(--ai-text-muted); line-height: 1.6; }
+    .info-card ul { padding-left: 20px; margin: 10px 0 0; }
+
+    /* Status/Result/Error Containers */
+    .generator-status-container, .generator-error-container {
+        background: var(--ai-panel-bg);
+        border: 1px solid var(--ai-border);
+        border-radius: 16px;
+        padding: 40px;
+        text-align: center;
+        animation: fadeIn 0.5s ease;
+    }
+    .generator-result-container {
+        text-align: center;
+    }
+
+    .spinner {
+        width: 50px; height: 50px;
+        border: 4px solid var(--ai-border);
+        border-top-color: var(--ai-primary);
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        animation: spin 1s linear infinite;
+    }
+    #status-text { font-size: 1.1rem; color: var(--ai-text-main); font-weight: 500; }
+
+    .generated-image-wrapper {
+        width: 100%;
+        margin: 0 auto 25px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--ai-border);
+        background: var(--input-bg);
+    }
+    #generated-image-preview { width: 100%; height: auto; display: block; }
+
+    .result-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+    .action-btn {
+        padding: 12px 20px; border-radius: 10px; border: none;
+        font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: 0.2s;
+        display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .action-btn svg { width: 16px; height: 16px; }
+
+    .action-btn.publish { background: var(--ai-primary); color: white; }
+    .action-btn.publish:hover { filter: brightness(1.1); }
+    .action-btn.discard { background: var(--border-color); color: var(--ai-text-main); }
+    .action-btn.save-work { background: var(--border-color); color: var(--ai-text-main); }
+    .action-btn.download { background: var(--border-color); color: var(--ai-text-main); }
+    .action-btn.discard:hover { background: var(--ai-text-muted); }
+
+    .generator-error-container h4 { color: #ff453a; }
+    .generator-error-container p { color: var(--ai-text-muted); }
+    .generator-error-container .action-btn { background: #ff453a; color: white; margin-top: 15px; }
+
+    /* Responsive Design */
+    @media (max-width: 800px) {
+        .generator-layout { grid-template-columns: 1fr; }
+        .generator-header h2 { font-size: 2rem; }
+        .generator-header p { font-size: 1rem; }
+        .generator-form-panel, .info-card { padding: 20px; }
+    }
+    @media (max-width: 400px) {
+        .generator-header h2 { font-size: 1.8rem; }
+        .generator-header p { font-size: 0.9rem; }
+        .generator-form-panel, .info-card, .generator-status-container, .generator-error-container { padding: 15px; }
+        .action-btn { padding: 10px 15px; font-size: 0.85rem; }
+    }
+
+    /* --- Eye Captive Publish Button --- */
+    .publish-btn-container {
+        position: relative;
+        display: inline-block;
+    }
+    .publish-tooltip {
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--ai-primary);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        white-space: nowrap;
+        margin-bottom: 12px;
+        animation: bounce 1.5s infinite;
+        pointer-events: none;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+    .publish-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -6px;
+        border-width: 6px;
+        border-style: solid;
+        border-color: var(--ai-primary) transparent transparent transparent;
+    }
+    @keyframes bounce {
+        0%, 100% { transform: translateX(-50%) translateY(0); }
+        50% { transform: translateX(-50%) translateY(-6px); }
+    }
+    
+    .action-btn.publish {
+        background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+        border: 1px solid rgba(255,255,255,0.2);
+        transform-origin: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        padding: 12px 28px;
+        font-size: 1rem;
+    }
+    .action-btn.publish:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(139, 92, 246, 0.5);
+    }
+    .action-btn.publish:not(:disabled) {
+        animation: pulse-glow 2s infinite;
+    }
+    @keyframes pulse-glow {
+        0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+    }
+
+    /* --- Community Section --- */
+    .community-section {
+        margin-top: 60px;
+        padding-top: 40px;
+        border-top: 1px solid var(--ai-border);
+    }
+    .community-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .community-header h3 {
+        font-size: 2rem;
+        margin: 0 0 10px;
+        background: linear-gradient(135deg, var(--ai-text-main) 0%, var(--ai-text-muted) 100%);
+        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+</style>
+
+<div id="generator-view" class="generator-container">
+    <div class="generator-header">
+        <h2>AI Image Generator</h2>
+        <p>Create unique images from text descriptions using Vertex AI.</p>
+    </div>
+
+    <div id="generator-workspace">
+        <div class="generator-controls">
+            <div class="generator-form-panel">
+                <div class="form-group">
+                    <label for="prompt-input">Your Prompt</label>
+                    <textarea id="prompt-input" class="prompt-textarea" rows="4" placeholder="e.g., A cinematic shot of a futuristic city at sunset, cyberpunk style, neon lights..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="aspect-ratio-select">Aspect Ratio</label>
+                    <div class="aspect-ratio-grid" id="aspect-ratio-grid">
+                        <button class="aspect-ratio-btn active" data-value="9:16">
+                            <svg viewBox="0 0 20 32"><rect x="1" y="1" width="18" height="30" rx="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            <span>Portrait</span>
+                        </button>
+                        <button class="aspect-ratio-btn" data-value="16:9">
+                            <svg viewBox="0 0 32 20"><rect x="1" y="1" width="30" height="18" rx="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            <span>Landscape</span>
+                        </button>
+                        <button class="aspect-ratio-btn" data-value="1:1">
+                            <svg viewBox="0 0 28 32"><rect x="1" y="4" width="26" height="26" rx="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            <span>Square</span>
+                        </button>
+                        <button class="aspect-ratio-btn" data-value="4:5">
+                            <svg viewBox="0 0 24 32"><rect x="1" y="2" width="22" height="28" rx="3" stroke="currentColor" stroke-width="2" fill="none"/></svg>
+                            <span>Social</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="generate-button">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                    <span>Generate Image</span>
+                </button>
+            </div>
+
+            <div class="generator-info-cards">
+                <div class="info-card">
+                    <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> How It Works</h4>
+                    <p>Your text prompt is sent to Google's powerful Imagen-3 model on Vertex AI. The AI interprets your words to create a brand new image. This process typically takes <strong>5-15 seconds</strong>.</p>
+                </div>
+                <div class="info-card">
+                    <h4><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg> Prompting Tips</h4>
+                    <ul>
+                        <li><strong>Be specific:</strong> "A photorealistic image of a red sports car" is better than "a car".</li>
+                        <li><strong>Add style:</strong> Use words like "cyberpunk", "fantasy", "cinematic", "watercolor".</li>
+                        <li><strong>Set the scene:</strong> Mention lighting like "golden hour" or "moody neon lights".</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="generator-results-area">
+            <div class="generator-result-container">
+                <h3>Your Generated Image</h3>
+                <div class="generated-image-wrapper">
+                    <img id="generated-image-preview" src="" alt="Generated Image" crossorigin="anonymous">
+                </div>
+                <div class="result-actions">
+                    <div class="publish-btn-container">
+                        <div class="publish-tooltip">Publish your img!</div>
+                        <button id="publish-btn" class="action-btn publish">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path><line x1="12" y1="9" x2="12" y2="3"></line><polyline points="16 3 12 9 8 3"></polyline></svg>
+                            <span>Publish</span>
+                        </button>
+                    </div>
+                    <button id="download-btn" class="action-btn download">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        <span>Download</span>
+                    </button>
+                    <button id="save-work-btn" class="action-btn save-work">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                        <span>Save</span>
+                    </button>
+                    <button id="publish-all-btn" class="action-btn publish" style="background: var(--ai-secondary);">Publish All</button>
+                    <button id="generate-another-btn" class="action-btn" style="display: none; background: var(--ai-blue); color: white;">
+                        <span>Generate Another</span>
+                    </button>
+                </div>
+            </div>
+            <div class="generation-history-container">
+                <h4>Session History</h4>
+                <div id="generation-history-grid"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="generator-status" class="generator-status-container" style="display: none;">
+        <div class="spinner"></div>
+        <p id="status-text">Queueing request...</p>
+        <p style="color: var(--ai-text-muted); font-size: 0.9rem; margin-top: 15px;">This can take up to 15 seconds. Please be patient!</p>
+    </div>
+
+    <div id="generator-error" class="generator-error-container" style="display: none;">
+        <h4>Generation Failed</h4>
+        <p id="error-text"></p>
+        <button id="retry-generation-btn" class="action-btn">Try Again</button>
+    </div>
+
+    <!-- Community Creations Section -->
+    <div class="community-section">
+        <div class="community-header">
+            <h3>Community Creations</h3>
+            <p>Explore what others are creating with AI</p>
+        </div>
+        <div class="gallery-grid" id="community-grid"></div>
+        <div style="text-align: center; margin-top: 30px; padding-bottom: 40px;">
+            <button id="community-load-more" class="action-btn" style="background: var(--ai-panel-bg); border: 1px solid var(--ai-border);">Load More</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // --- DOM Elements ---
+        const workspace = document.getElementById('generator-workspace');
+        const controlsView = workspace.querySelector('.generator-controls');
+        const resultsView = workspace.querySelector('.generator-results-area');
+        const statusView = document.getElementById('generator-status');
+        const errorView = document.getElementById('generator-error');
+
+        const generateBtn = document.getElementById('generate-btn');
+        const promptInput = document.getElementById('prompt-input');
+        const ratioGrid = document.getElementById('aspect-ratio-grid');
+        const statusText = document.getElementById('status-text');
+        const previewImg = document.getElementById('generated-image-preview');
+        const errorText = document.getElementById('error-text');
+
+        const publishBtn = document.getElementById('publish-btn');
+        const publishAllBtn = document.getElementById('publish-all-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const saveWorkBtn = document.getElementById('save-work-btn');
+        const retryBtn = document.getElementById('retry-generation-btn');
+        const historyGrid = document.getElementById('generation-history-grid');
+        const generateAnotherBtn = document.getElementById('generate-another-btn');
+
+        let currentGeneratedFilename = null;
+        let generationHistory = [];
+
+        // --- Local Storage & State ---
+        function loadHistory() {
+            generationHistory = JSON.parse(localStorage.getItem('generation_history')) || [];
+            if (generationHistory.length > 0) {
+                const latestImage = generationHistory[0];
+                currentGeneratedFilename = latestImage.filename;
+                promptInput.value = latestImage.prompt;
+                showResultView(latestImage.filename);
+            }
+        }
+
+        function saveHistory() {
+            localStorage.setItem('generation_history', JSON.stringify(generationHistory));
+        }
+
+        function addToHistory(filename, prompt) {
+            // Prevent duplicates
+            if (generationHistory.some(item => item.filename === filename)) return;
+            generationHistory.unshift({ filename, prompt });
+            saveHistory();
+        }
+
+        function removeFromHistory(filename, event) {
+            if(event) event.stopPropagation();
+            generationHistory = generationHistory.filter(item => item.filename !== filename);
+            saveHistory();
+            renderHistory();
+            // If the removed item was the main one, select the new latest one
+            if (currentGeneratedFilename === filename) {
+                if (generationHistory.length > 0) {
+                    selectHistoryItem(generationHistory[0].filename);
+                } else {
+                    resetGenerator();
+                }
+            }
+        }
+
+        // --- UI State Management ---
+        function showView(view) {
+            [workspace, statusView, errorView].forEach(v => v.style.display = 'none');
+            view.style.display = 'block';
+        }
+
+        function showResultView(filename) {
+            const isDesktop = window.innerWidth > 800;
+            showView(workspace);
+
+            if (isDesktop) {
+                workspace.classList.add('split-view-active');
+                resultsView.style.display = 'block';
+                controlsView.style.display = 'block';
+                generateAnotherBtn.style.display = 'none';
+            } else {
+                // On mobile, hide controls and only show results
+                workspace.classList.remove('split-view-active');
+                controlsView.style.display = 'none';
+                resultsView.style.display = 'block';
+                generateAnotherBtn.style.display = 'inline-flex';
+            }
+            
+            previewImg.src = `/temp_preview/${filename}`;
+            renderHistory();
+
+            // Scroll to the results so the user can see the new image
+            resultsView.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function renderHistory() {
+            historyGrid.innerHTML = '';
+            if (generationHistory.length === 0) {
+                publishAllBtn.style.display = 'none';
+                return;
+            }
+
+            publishAllBtn.style.display = generationHistory.length > 1 ? 'inline-flex' : 'none';
+
+            generationHistory.forEach(item => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                if (item.filename === currentGeneratedFilename) {
+                    historyItem.classList.add('active');
+                }
+                historyItem.innerHTML = `
+                    <img src="/temp_preview/${item.filename}" alt="Generated history item">
+                    <button class="delete-history-btn" title="Remove from history">&times;</button>
+                `;
+                historyItem.addEventListener('click', () => selectHistoryItem(item.filename));
+                historyItem.querySelector('.delete-history-btn').addEventListener('click', (e) => removeFromHistory(item.filename, e));
+                historyGrid.appendChild(historyItem);
+            });
+        }
+
+        function selectHistoryItem(filename) {
+            const item = generationHistory.find(i => i.filename === filename);
+            if (!item) return;
+
+            currentGeneratedFilename = item.filename;
+            promptInput.value = item.prompt;
+            previewImg.src = `/temp_preview/${item.filename}`;
+
+            // Update active class
+            document.querySelectorAll('.history-item').forEach(el => el.classList.remove('active'));
+            const activeEl = Array.from(historyGrid.children).find(child => child.querySelector('img').src.includes(filename));
+            if (activeEl) activeEl.classList.add('active');
+        }
+
+        function handleGenerateAnother() {
+            controlsView.style.display = 'block';
+            resultsView.style.display = 'none';
+            workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        // --- Event Listeners ---
+        generateBtn.addEventListener('click', handleGenerateClick);
+        retryBtn.addEventListener('click', () => showView(workspace));
+        publishBtn.addEventListener('click', () => publishImage(currentGeneratedFilename, promptInput.value));
+        publishAllBtn.addEventListener('click', handlePublishAll);
+        downloadBtn.addEventListener('click', handleDownload);
+        if(saveWorkBtn) saveWorkBtn.addEventListener('click', handleSaveWork);
+        generateAnotherBtn.addEventListener('click', handleGenerateAnother);
+
+        ratioGrid.addEventListener('click', (e) => {
+            const button = e.target.closest('.aspect-ratio-btn');
+            if (button) {
+                ratioGrid.querySelectorAll('.aspect-ratio-btn').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+            }
+        });
+
+        function resetGenerator() {
+            workspace.classList.remove('split-view-active');
+            controlsView.style.display = 'block';
+            resultsView.style.display = 'none';
+            promptInput.value = '';
+            currentGeneratedFilename = null;
+            generationHistory = [];
+            saveHistory();
+            renderHistory();
+            if(saveWorkBtn) {
+                saveWorkBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Save</span>';
+                saveWorkBtn.style.background = '';
+            }
+        }
+
+        // --- Core Logic ---
+        async function pollAnalysisTask(taskId) {
+            while(true) {
+                await new Promise(r => setTimeout(r, 2000)); 
+                try {
+                    let statusRes = await fetch(`/api/check_task/${taskId}`).then(r=>r.json());
+                    if(statusRes.status === 'completed') {
+                        return { success: true, data: statusRes.data };
+                    }
+                    if(statusRes.status === 'failed') {
+                        return { success: false, error: statusRes.error, critical_stop: statusRes.critical_stop };
+                    }
+                } catch(e) {
+                    console.warn("Polling error", e);
+                }
+            }
+        }
+
+        function resizeImage(img, maxWidth, quality) {
+            return new Promise(resolve => {
+                const canvas = document.createElement('canvas');
+                let width = img.width;
+                let height = img.height;
+                
+                if (width > height) {
+                    if (width > maxWidth) {
+                        height = Math.round(height * (maxWidth / width));
+                        width = maxWidth;
+                    }
+                } else {
+                    if (height > maxWidth) {
+                        width = Math.round(width * (maxWidth / height));
+                        height = maxWidth;
+                    }
+                }
+                
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                canvas.toBlob(blob => {
+                    resolve(blob);
+                }, 'image/webp', quality);
+            });
+        }
+
+        function isUserLoggedIn() {
+            return !!localStorage.getItem('user_session');
+        }
+
+        function checkGuestLimit() {
+            if (isUserLoggedIn()) return true;
+            const count = parseInt(localStorage.getItem('guest_gen_count') || '0');
+            if (count >= 5) {
+                if (typeof openAuthModal === 'function') openAuthModal('signup');
+                else alert("Please register to generate more images.");
+                return false;
+            }
+            return true;
+        }
+
+        function incrementGuestCount() {
+            if (!isUserLoggedIn()) {
+                const count = parseInt(localStorage.getItem('guest_gen_count') || '0');
+                localStorage.setItem('guest_gen_count', count + 1);
+            }
+        }
+
+        async function handleGenerateClick() {
+            if (!checkGuestLimit()) return;
+
+            const prompt = promptInput.value.trim();
+            if (!prompt) {
+                alert('Please enter a prompt.');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            setTimeout(() => { generateBtn.disabled = false; }, 10000);
+
+            showView(statusView);
+            statusText.textContent = 'Queueing request...';
+
+            try {
+                const response = await fetch('/api/generate_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        aspect_ratio: ratioGrid.querySelector('.aspect-ratio-btn.active').dataset.value || '9:16'
+                    })
+                });
+
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'Failed to queue task.');
+
+                incrementGuestCount();
+                statusText.textContent = 'Generating image...';
+                pollTaskStatus(data.task_id, prompt);
+
+            } catch (err) {
+                showError(err.message);
+            }
+        }
+
+        async function pollTaskStatus(taskId, prompt) {
+            const interval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/check_task/${taskId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'completed' && data.task_type === 'generate') {
+                        clearInterval(interval);
+                        const filename = data.data.generated_filename;
+                        currentGeneratedFilename = filename;
+                        addToHistory(filename, prompt);
+                        showResultView(filename);
+                    } else if (data.status === 'failed') {
+                        clearInterval(interval);
+                        showError(data.error || 'An unknown error occurred during generation.');
+                    }
+                } catch (err) {
+                    clearInterval(interval);
+                    showError('Lost connection to the server while checking status.');
+                }
+            }, 3000);
+        }
+
+        async function publishImage(filename, prompt) {
+            if (!filename) return false;
+
+            if (!isUserLoggedIn()) {
+                if (typeof openAuthModal === 'function') openAuthModal('signup');
+                return false;
+            }
+
+            const btn = document.getElementById('publish-btn');
+            if(btn) {
+                btn.disabled = true;
+                btn.querySelector('span').textContent = 'Processing...';
+                btn.classList.add('btn-loading');
+            }
+
+            try {
+                // 1. Get Blob from Preview & Load Image
+                const imgBlob = await fetch(previewImg.src).then(r => r.blob());
+                const imgFile = new File([imgBlob], filename, { type: imgBlob.type });
+
+                const imgObj = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(imgBlob);
+                });
+
+                // 2. Client-Side Compression
+                if(btn) btn.querySelector('span').textContent = 'Compressing...';
+                const blobMedium = await resizeImage(imgObj, 2048, 0.9);
+                const blobSmall = await resizeImage(imgObj, 1024, 0.8);
+                const blobTiny = await resizeImage(imgObj, 600, 0.85);
+
+                // 3. Prepare Upload
+                let fd = new FormData();
+                fd.append('client_processed', 'true');
+                fd.append('file_original', imgFile);
+                fd.append('file_medium', blobMedium, "medium.webp");
+                fd.append('file_small', blobSmall, "small.webp");
+                fd.append('file_tiny', blobTiny, "tiny.webp");
+                
+                fd.append('resolution', `${imgObj.width}x${imgObj.height}`);
+                let quality = 'HD';
+                const longSide = Math.max(imgObj.width, imgObj.height);
+                if (longSide >= 3840) quality = '4K';
+                else if (longSide >= 2560) quality = '2K';
+                else if (longSide >= 1920) quality = 'FHD';
+                fd.append('quality', quality);
+
+                // 4. Upload to R2
+                if(btn) btn.querySelector('span').textContent = 'Uploading...';
+                const upRes = await fetch('/upload', {method:'POST', body:fd}).then(r=>r.json());
+                if(!upRes.success) throw new Error(upRes.message);
+
+                // 5. Analyze
+                if(btn) btn.querySelector('span').textContent = 'Analyzing...';
+                const analyzeRes = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename: upRes.filename })
+                }).then(r => r.json());
+
+                if (!analyzeRes.success) throw new Error(analyzeRes.message || 'Failed to start analysis.');
+
+                // 6. Poll for Results
+                let aiRes;
+                if(analyzeRes.data) {
+                    aiRes = { success: true, data: analyzeRes.data };
+                } else {
+                    aiRes = await pollAnalysisTask(analyzeRes.task_id);
+                }
+
+                if (aiRes.critical_stop) {
+                    if (typeof window.triggerSecurityAlert === 'function') {
+                        window.triggerSecurityAlert(aiRes.error);
+                    }
+                    throw new Error(aiRes.error);
+                }
+                if(!aiRes.success) throw new Error(aiRes.error || "Analysis failed");
+
+                // 7. Publish
+                if(btn) btn.querySelector('span').textContent = 'Publishing...';
+                const aiData = aiRes.data;
+                
+                // Normalize AI Data
+                let name = aiData.name || filename;
+                let keywords = aiData.keywords;
+                let color = aiData.color || aiData.color_code;
+                let category = aiData.category;
+
+                if (aiData.translations && aiData.translations.en) {
+                     name = aiData.translations.en.name;
+                     color = aiData.translations.en.color;
+                     keywords = aiData.translations.en.keywords;
+                     category = aiData.category;
+                }
+
+                const publishRes = await fetch('/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: upRes.filename,
+                        category: 'image',
+                        r2_data: upRes.r2_data,
+                        name: name,
+                        description: aiData.description,
+                        key_word: keywords,
+                        color_code: color,
+                        content_category: category,
+                        ai_data: JSON.stringify(aiData)
+                    })
+                }).then(r => r.json());
+
+                if (!publishRes.success) throw new Error(publishRes.message || 'Failed to publish.');
+                
+                // Success UI
+                if(btn) {
+                    btn.querySelector('span').textContent = 'Published!';
+                    btn.style.background = '#4caf50';
+                }
+                
+                // Remove from history as it's now published
+                removeFromHistory(filename);
+                
+                setTimeout(() => {
+                    if(generationHistory.length === 0) resetGenerator();
+                    if(btn) {
+                        btn.disabled = false;
+                        btn.querySelector('span').textContent = 'Publish';
+                        btn.style.background = '';
+                        btn.classList.remove('btn-loading');
+                    }
+                }, 2000);
+                
+                return true;
+
+            } catch (err) {
+                if (err.message === 'AUTH_REQUIRED' || err.message.includes('401')) {
+                    localStorage.setItem('generation_history', JSON.stringify(generationHistory));
+                    if (typeof openAuthModal === 'function') openAuthModal('signup');
+                    else alert("Please log in to publish.");
+                } else {
+                    console.error(err);
+                    alert(`Publish Error for ${filename}: ${err.message}`);
+                }
+                if(btn) {
+                    btn.disabled = false;
+                    btn.querySelector('span').textContent = 'Publish';
+                    btn.classList.remove('btn-loading');
+                }
+                return false;
+            }
+        }
+
+        async function handlePublishAll() {
+            const imagesToPublish = [...generationHistory]; // Create a copy
+            let successCount = 0;
+
+            for (const item of imagesToPublish) {
+                const success = await publishImage(item.filename, item.prompt);
+                if (success) {
+                    successCount++;
+                    // Visually remove from history on success
+                    removeFromHistory(item.filename);
+                }
+            }
+
+            alert(`${successCount} of ${imagesToPublish.length} images published successfully.`);
+            if (generationHistory.length === 0) {
+                resetGenerator();
+            }
+        }
+
+        async function handleSaveWork() {
+            if (!currentGeneratedFilename) return;
+
+            if (!isUserLoggedIn()) {
+                if (typeof openAuthModal === 'function') openAuthModal('signup');
+                return;
+            }
+            
+            const originalHtml = saveWorkBtn.innerHTML;
+            saveWorkBtn.disabled = true;
+            saveWorkBtn.innerHTML = '<span>Saving...</span>';
+
+            try {
+                const response = await fetch('/api/save_generated_image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentGeneratedFilename,
+                        prompt: promptInput.value
+                    })
+                });
+                
+                if (response.status === 401) {
+                     if (typeof openAuthModal === 'function') openAuthModal('signup');
+                     else alert("Please log in to save.");
+                     throw new Error("Auth required");
+                }
+
+                const data = await response.json();
+                if (data.success) {
+                    saveWorkBtn.innerHTML = '<span>Saved!</span>';
+                    saveWorkBtn.style.background = '#4caf50';
+                    saveWorkBtn.style.color = 'white';
+                    if (window.refreshSavedAssets) window.refreshSavedAssets();
+                } else {
+                    throw new Error(data.message);
+                }
+            } catch (e) {
+                if (e.message !== "Auth required") alert("Save failed: " + e.message);
+                saveWorkBtn.innerHTML = originalHtml;
+                saveWorkBtn.disabled = false;
+            }
+        }
+
+        function handleDownload() {
+            if (!previewImg.src) return;
+            const link = document.createElement('a');
+            link.href = previewImg.src;
+            link.download = currentGeneratedFilename || 'generated-image.png';
+            link.click();
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            showView(errorView);
+        }
+
+        // --- Community Feed Logic ---
+        const communityGrid = document.getElementById('community-grid');
+        const communityLoadMoreBtn = document.getElementById('community-load-more');
+        let communityImages = [];
+
+        function loadCommunityCreations() {
+            if(communityLoadMoreBtn) {
+                communityLoadMoreBtn.textContent = 'Loading...';
+                communityLoadMoreBtn.disabled = true;
+            }
+
+            // Fetch latest assets (Home Page Feed)
+            fetch(`/api/assets/image?limit=20&offset=${communityImages.length}`)
+                .then(r => r.json())
+                .then(data => {
+                    if(communityLoadMoreBtn) {
+                        communityLoadMoreBtn.textContent = 'Load More';
+                        communityLoadMoreBtn.disabled = false;
+                    }
+
+                    if (data.success && data.assets.length > 0) {
+                        if (typeof window.setupMasonryGrid === 'function') {
+                            window.setupMasonryGrid(communityGrid);
+                        }
+
+                        const startIndex = communityImages.length;
+                        communityImages.push(...data.assets);
+
+                        data.assets.forEach((asset, i) => {
+                            if (typeof window.createImageCard === 'function') {
+                                // Pass communityImages as the list override so viewer navigates this list
+                                const card = window.createImageCard(asset, startIndex + i, communityImages);
+                                
+                                // Masonry Append Logic
+                                const cols = communityGrid.querySelectorAll('.gallery-col');
+                                if (cols.length > 0) {
+                                    let target = cols[0];
+                                    cols.forEach(col => {
+                                        if (col.offsetHeight < target.offsetHeight) target = col;
+                                    });
+                                    target.appendChild(card);
+                                } else {
+                                    communityGrid.appendChild(card);
+                                }
+                            }
+                        });
+                    } else {
+                        if(communityLoadMoreBtn) communityLoadMoreBtn.textContent = 'No more images';
+                    }
+                })
+                .catch(e => {
+                    console.error(e);
+                    if(communityLoadMoreBtn) {
+                        communityLoadMoreBtn.textContent = 'Error loading';
+                        communityLoadMoreBtn.disabled = false;
+                    }
+                });
+        }
+
+        if (communityLoadMoreBtn) {
+            communityLoadMoreBtn.addEventListener('click', loadCommunityCreations);
+            // Initial load
+            loadCommunityCreations();
+        }
+
+        // Initial Load
+        loadHistory();
+
+    })();
+</script>
