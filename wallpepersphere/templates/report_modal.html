@@ -1,0 +1,101 @@
+<!-- REPORT MODAL COMPONENT -->
+<div class="report-overlay" id="reportModal">
+    <div class="report-card">
+        <div class="report-header">
+            <h2>Report Content</h2>
+            <p>Help us keep the community safe</p>
+        </div>
+        
+        <div class="report-options">
+            <div class="report-option">
+                <input type="checkbox" id="reason1" value="inappropriate">
+                <label for="reason1">Inappropriate Content</label>
+            </div>
+            <div class="report-option">
+                <input type="checkbox" id="reason2" value="copyright">
+                <label for="reason2">I claim ownership (Copyright)</label>
+            </div>
+            <div class="report-option">
+                <input type="checkbox" id="reason3" value="spam">
+                <label for="reason3">Spam or Misleading</label>
+            </div>
+        </div>
+
+        <textarea class="report-text" id="reportMessage" placeholder="Please provide additional details..."></textarea>
+
+        <div class="report-actions">
+            <button class="report-btn-cancel" onclick="closeReportModal()">Cancel</button>
+            <button class="report-btn-submit" onclick="submitReport()">Submit Report</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentReportAssetId = null;
+    let currentReportCategory = null;
+
+    function openReportModal(assetId, category) {
+        currentReportAssetId = assetId;
+        currentReportCategory = category;
+        document.getElementById('reportModal').classList.add('active');
+    }
+
+    function closeReportModal() {
+        document.getElementById('reportModal').classList.remove('active');
+        // Reset form
+        document.querySelectorAll('.report-option input').forEach(cb => cb.checked = false);
+        document.getElementById('reportMessage').value = '';
+        currentReportAssetId = null;
+    }
+
+    async function submitReport() {
+        if (!currentReportAssetId) return;
+
+        const reasons = [];
+        if (document.getElementById('reason1').checked) reasons.push('inappropriate');
+        if (document.getElementById('reason2').checked) reasons.push('copyright');
+        if (document.getElementById('reason3').checked) reasons.push('spam');
+        
+        const message = document.getElementById('reportMessage').value;
+
+        if (reasons.length === 0 && !message.trim()) {
+            alert("Please select a reason or provide details.");
+            return;
+        }
+
+        const btn = document.querySelector('.report-btn-submit');
+        const originalText = btn.textContent;
+        btn.textContent = "Submitting...";
+        btn.disabled = true;
+
+        try {
+            const res = await fetch('/api/report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    asset_id: currentReportAssetId,
+                    category: currentReportCategory,
+                    reasons: reasons,
+                    message: message
+                })
+            }).then(r => r.json());
+
+            if (res.success) {
+                alert("Report submitted. Thank you.");
+                closeReportModal();
+            } else {
+                alert("Error: " + res.message);
+            }
+        } catch (e) {
+            alert("Failed to submit report.");
+        } finally {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+    
+    // Close on outside click
+    document.getElementById('reportModal').addEventListener('click', (e) => {
+        if (e.target.id === 'reportModal') closeReportModal();
+    });
+</script>
