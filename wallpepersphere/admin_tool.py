@@ -134,6 +134,30 @@ def get_all_site_urls():
     print(f"Found {len(urls)} total URLs to index.")
     return urls
 
+def get_google_credentials():
+    """Helper to get Google Credentials from Env (JSON string) or File."""
+    scopes = ["https://www.googleapis.com/auth/indexing"]
+    
+    # 1. Try JSON Content from Env (Best for Render/Production)
+    creds_json = os.environ.get('GOOGLE_CREDENTIALS_JSON')
+    if creds_json:
+        try:
+            # Parse the JSON string from the environment variable
+            info = json.loads(creds_json)
+            return service_account.Credentials.from_service_account_info(info, scopes=scopes)
+        except Exception as e:
+            print(f"⚠️ Invalid GOOGLE_CREDENTIALS_JSON: {e}")
+
+    # 2. Try File Path (Local Development)
+    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
+    if not creds_file and os.path.exists('service-account.json'):
+        creds_file = 'service-account.json'
+    
+    if creds_file and os.path.exists(creds_file):
+        return service_account.Credentials.from_service_account_file(creds_file, scopes=scopes)
+    
+    return None
+
 def submit_urls_for_indexing(urls_to_submit, force=False):
     """Submits URLs to the Google Indexing API with history tracking and limits."""
     if not urls_to_submit:
@@ -173,13 +197,8 @@ def submit_urls_for_indexing(urls_to_submit, force=False):
         print("✅ All URLs are up to date. No action needed.")
         return
 
-    # Check for credentials
-    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    # Fallback: Check current directory if env var is missing
-    if not creds_file and os.path.exists('service-account.json'):
-        creds_file = 'service-account.json'
-        
-    if not creds_file or not os.path.exists(creds_file):
+    credentials = get_google_credentials()
+    if not credentials:
         print("❌ Error: GOOGLE_APPLICATION_CREDENTIALS not set or file not found.")
         print("Please set this in your .env file pointing to your service account JSON.")
         return
@@ -199,10 +218,15 @@ def submit_urls_for_indexing(urls_to_submit, force=False):
         return
 
     # 4. Prepare Batch
-    batch_size = min(len(pending_urls), quota_left)
+    # Limit to 100 URLs per click as requested, or whatever quota is left
+    BATCH_LIMIT = 100
+    batch_size = min(len(pending_urls), quota_left, BATCH_LIMIT)
     batch = pending_urls[:batch_size]
     
-    if not force:
+    # Check if running in Render or Automation to skip input
+    is_automated = os.environ.get('RENDER') or os.environ.get('CI') or os.environ.get('AUTO_CONFIRM')
+    
+    if not force and not is_automated:
         confirm = input(f"🚀 Ready to submit {len(batch)} URLs. Proceed? (y/n): ")
         if confirm.lower() != 'y':
             print("Operation cancelled.")
@@ -210,9 +234,6 @@ def submit_urls_for_indexing(urls_to_submit, force=False):
 
     try:
         print("Authenticating with Google Indexing API...")
-        credentials = service_account.Credentials.from_service_account_file(
-            creds_file, scopes=["https://www.googleapis.com/auth/indexing"]
-        )
         service = build("indexing", "v3", credentials=credentials)
         
         success_count = 0
@@ -248,19 +269,12 @@ def submit_urls_for_indexing(urls_to_submit, force=False):
 
 def check_url_status(url):
     """Checks the notification status of a URL using Google Indexing API."""
-    # Check for credentials
-    creds_file = os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')
-    if not creds_file and os.path.exists('service-account.json'):
-        creds_file = 'service-account.json'
-        
-    if not creds_file or not os.path.exists(creds_file):
+    credentials = get_google_credentials()
+    if not credentials:
         print("❌ Error: GOOGLE_APPLICATION_CREDENTIALS not set or file not found.")
         return
 
     try:
-        credentials = service_account.Credentials.from_service_account_file(
-            creds_file, scopes=["https://www.googleapis.com/auth/indexing"]
-        )
         service = build("indexing", "v3", credentials=credentials)
         
         print(f"🔍 Checking status for: {url} ...")
