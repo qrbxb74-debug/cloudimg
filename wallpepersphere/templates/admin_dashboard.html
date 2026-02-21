@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - wallpepersphere</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f1a;
+            --card: #151b2b;
+            --text: #e5e7eb;
+            --text-muted: #9ca3af;
+            --primary: #3b82f6;
+            --danger: #ef4444;
+            --border: rgba(255,255,255,0.1);
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: var(--card); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; }
+        .logo { font-size: 20px; font-weight: 700; margin-bottom: 40px; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; color: var(--text-muted); transition: 0.2s; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+        .nav-item:hover, .nav-item.active { background: rgba(59, 130, 246, 0.1); color: var(--primary); }
+        .nav-item svg { width: 20px; height: 20px; }
+        
+        /* Main Content */
+        .main { flex: 1; padding: 30px; overflow-y: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .title { font-size: 24px; font-weight: 700; }
+        
+        /* Cards */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .card { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .card-label { font-size: 14px; color: var(--text-muted); margin-bottom: 5px; }
+        .card-value { font-size: 28px; font-weight: 700; }
+        
+        /* Tables */
+        .table-container { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px 20px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { background: rgba(255,255,255,0.02); font-weight: 600; color: var(--text-muted); font-size: 14px; }
+        tr:last-child td { border-bottom: none; }
+        .btn-sm { padding: 6px 12px; border-radius: 6px; border: none; cursor: pointer; font-size: 12px; font-weight: 500; }
+        .btn-danger { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: white; }
+
+        /* Upload Section */
+        .upload-zone { border: 2px dashed var(--border); border-radius: 12px; padding: 40px; text-align: center; cursor: pointer; transition: 0.2s; background: rgba(255,255,255,0.02); }
+        .upload-zone:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+        .file-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .file-item { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; }
+        .file-preview { width: 50px; height: 50px; border-radius: 6px; object-fit: cover; background: #000; display: flex; align-items: center; justify-content: center; color: #888; font-size: 10px; }
+        .file-inputs { flex: 1; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        .input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .btn-primary { background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .btn-primary:hover { filter: brightness(1.1); }
+
+        /* Sections */
+        .section { display: none; }
+        .section.active { display: block; }
+
+        /* Toast Notifications */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--card); border: 1px solid var(--border); padding: 12px 20px; border-radius: 8px; color: var(--text); box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1); min-width: 280px; pointer-events: auto; }
+        .toast.success { border-left: 4px solid #4caf50; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .toast.warning { border-left: 4px solid #f59e0b; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* Mobile Styles */
+        .mobile-header { display: none; align-items: center; justify-content: space-between; padding: 15px 20px; background: var(--card); border-bottom: 1px solid var(--border); position: fixed; top: 0; left: 0; right: 0; z-index: 800; }
+        .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 900; display: none; backdrop-filter: blur(3px); }
+        .sidebar-overlay.active { display: block; }
+
+        @media (max-width: 768px) {
+            .sidebar { position: fixed; left: -100%; top: 0; bottom: 0; z-index: 1000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); width: 260px; box-shadow: 10px 0 30px rgba(0,0,0,0.5); }
+            .sidebar.active { left: 0; }
+            .mobile-header { display: flex; }
+            .main { padding: 20px; padding-top: 80px; }
+            .header { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .header button { width: 100%; }
+            .grid { grid-template-columns: 1fr; }
+            .file-item { flex-direction: column; align-items: stretch; }
+            .file-preview { width: 100%; height: 180px; margin-bottom: 15px; }
+            .file-inputs { grid-template-columns: 1fr; }
+            .table-container { overflow-x: auto; }
+            th, td { white-space: nowrap; }
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 10000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+    <div style="background: var(--card); padding: 25px; border-radius: 16px; border: 1px solid var(--border); max-width: 350px; width: 90%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6); animation: slideIn 0.2s ease;">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px;">Confirm Action</h3>
+        <p id="confirm-msg" style="color: var(--text-muted); margin-bottom: 25px; line-height: 1.5; font-size: 14px;"></p>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button class="btn-sm" onclick="closeConfirm()" style="background: transparent; border: 1px solid var(--border); color: var(--text); padding: 10px 20px; flex: 1;">Cancel</button>
+            <button class="btn-primary" id="confirm-yes-btn" style="padding: 10px 20px; flex: 1;">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Mobile Header -->
+<div class="mobile-header">
+    <div style="font-weight: 700; font-size: 18px; display: flex; align-items: center; gap: 10px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        wallpepersphere Admin
+    </div>
+    <button onclick="toggleSidebar()" style="background: none; border: none; color: var(--text); cursor: pointer;" aria-label="Toggle sidebar">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+    </button>
+</div>
+
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<div class="sidebar">
+    <div class="logo">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        wallpepersphere Admin
+    </div>
+    <div class="nav-item active" onclick="showSection('dashboard', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+        Dashboard
+    </div>
+    <div class="nav-item" onclick="showSection('users', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+        Users
+    </div>
+    <div class="nav-item" onclick="showSection('upload', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+        Bulk Upload
+    </div>
+    <div class="nav-item" onclick="showSection('r2scan', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        R2 Scan
+    </div>
+    <div class="nav-item" onclick="showSection('aitools', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-9 9m9-9a9 9 0 0 0-9-9m9 9H3m9 9a9 9 0 0 1-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 0 1 9-9"/></svg>
+        AI Tools
+    </div>
+    <div class="nav-item" onclick="showSection('sitemap', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 10v11h22V10M1 5v5h22V5M12 2v3"></path><path d="M1 10V5a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4v5"></path></svg>
+        Sitemap
+    </div>
+    <div class="nav-item" onclick="showSection('indexing', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+        Google Indexing
+    </div>
+    <div class="nav-item" onclick="showSection('reports', this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+        Reports & Feedback
+    </div>
+    <div style="margin-top: auto;">
+        <a href="/" class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            Back to Site
+        </a>
+    </div>
+</div>
+
+<div class="main">
+    
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard" class="section active">
+        <div class="header">
+            <div class="title">Overview</div>
+            <button class="btn-primary" onclick="refreshStats()">Refresh</button>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <div class="card-label">Total Users</div>
+                <div class="card-value" id="stat-users">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Images</div>
+                <div class="card-value" id="stat-images">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Logos</div>
+                <div class="card-value" id="stat-logos">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Total Downloads</div>
+                <div class="card-value" id="stat-downloads">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">AI Generations</div>
+                <div class="card-value" id="stat-generations">-</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USERS SECTION -->
+    <div id="users" class="section">
+        <div class="header">
+            <div class="title">User Management</div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    <!-- Injected via JS -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- UPLOAD SECTION -->
+    <div id="upload" class="section">
+        <div class="header">
+            <div class="title">Bulk Upload</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-primary" onclick="publishAll()" id="publishBtn" style="display:none;">Publish All</button>
+            </div>
+        </div>
+        
+        <div class="upload-zone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" multiple hidden onchange="handleFiles(this.files)">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" style="margin-bottom: 10px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            <p>Click to select files or drag & drop here</p>
+            <p style="font-size: 12px; color: var(--text-muted);">Supports JPG, PNG, WEBP</p>
+        </div>
+
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <!-- R2 SCAN SECTION -->
+    <div id="r2scan" class="section">
+        <div class="header">
+            <div class="title">R2 Orphaned Files</div>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-sm btn-danger" id="btn-delete-all" onclick="deleteAllOrphans()" style="display:none;">Delete All Orphans</button>
+                <button class="btn-primary" onclick="scanR2()">Scan Now</button>
+            </div>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Preview</th>
+                        <th>File Key</th>
+                        <th>Size</th>
+                        <th>Last Modified</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="r2-table-body">
+                    <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Click "Scan Now" to find files in R2 not in SQL.</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- AI TOOLS SECTION -->
+    <div id="aitools" class="section">
+        <div class="header">
+            <div class="title">AI Import Tools</div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>Scan R2 for Unregistered Images</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">
+                Find images in the R2 bucket that are not in the database and generate a prompt to import them.
+            </p>
+            <button class="btn-primary" onclick="scanUnanalyzedDB()">Scan R2 & Generate Prompt</button>
+            <div id="db-scan-status" style="margin-top:10px; font-size:13px; color:var(--text-muted);"></div>
+        </div>
+
+        <div class="card" style="margin-bottom: 20px;">
+            <h3>Generate Prompt</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">
+                Generate a prompt for ChatGPT based on files currently in the <strong>Bulk Upload</strong> queue.
+            </p>
+            <button class="btn-primary" onclick="generatePromptFromPending()">Generate from Pending Uploads</button>
+            
+            <div id="ai-prompt-container" style="display:none; margin-top:15px;">
+                <textarea id="ai-prompt-text" style="width:100%; height:100px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font-family:monospace; font-size:12px;" readonly></textarea>
+                <button class="btn-sm" onclick="copyPrompt()" style="margin-top:5px; background:var(--border); color:var(--text);">Copy to Clipboard</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Process AI Response</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">
+                Paste the JSON array received from ChatGPT below to automatically tag and publish files.
+            </p>
+            <textarea id="ai-json-input" style="width:100%; height:200px; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:10px; font-family:monospace; font-size:12px;" placeholder='Paste the JSON array from ChatGPT here...'></textarea>
+            <button class="btn-primary" onclick="processAIImport()" style="margin-top:15px;">Process & Publish</button>
+        </div>
+    </div>
+
+    <!-- SITEMAP SECTION -->
+    <div id="sitemap" class="section">
+        <div class="header">
+            <div class="title">Sitemap Management</div>
+        </div>
+        <div class="card">
+            <h3>Update Sitemap</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">
+                Generate a static <code>sitemap.xml</code> file based on the latest uploads. This improves performance and helps Google index your images faster.
+            </p>
+            <button class="btn-primary" onclick="generateSitemap()">Generate Sitemap</button>
+            <a href="/sitemap.xml" target="_blank" class="btn-sm" style="margin-left: 10px; color: var(--primary); text-decoration: none;">View Sitemap</a>
+        </div>
+    </div>
+
+    <!-- GOOGLE INDEXING SECTION -->
+    <div id="indexing" class="section">
+        <div class="header">
+            <div class="title">Google Indexing API</div>
+            <button class="btn-primary" onclick="loadIndexingStats()">Refresh Stats</button>
+        </div>
+        
+        <div class="grid">
+            <div class="card">
+                <div class="card-label">Total URLs</div>
+                <div class="card-value" id="idx-total">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Successfully Submitted</div>
+                <div class="card-value" id="idx-submitted" style="color: #4caf50;">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Waiting to Submit</div>
+                <div class="card-value" id="idx-pending" style="color: #f59e0b;">-</div>
+            </div>
+            <div class="card">
+                <div class="card-label">Quota Remaining (24h)</div>
+                <div class="card-value" id="idx-quota" style="color: #3b82f6;">-</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Manual Indexing Tools</h3>
+            <p style="color:var(--text-muted); font-size:14px; margin-bottom:15px;">
+                Push specific URLs directly to Google's index. Google allows up to 200 URLs per day.
+            </p>
+            
+            <div>
+                <h4 style="margin: 0 0 10px 0; font-size: 16px;">Manual Submission</h4>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="manual-index-url" class="input" placeholder="https://wallpepersphere.com/view/image/123/example" style="flex: 1;">
+                    <button class="btn-primary" onclick="submitManualUrl()">Submit URL</button>
+                </div>
+            </div>
+
+            <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border);">
+                <h4 style="margin: 0 0 10px 0; font-size: 16px;">Check URL Status</h4>
+                <p style="color:var(--text-muted); font-size:13px; margin-bottom:10px;">
+                    Verify if Google has received a notification for a specific URL.
+                </p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="check-status-url" class="input" placeholder="https://wallpepersphere.com/view/image/123/example" style="flex: 1;">
+                    <button class="btn-primary" onclick="checkUrlStatus()">Check Status</button>
+                </div>
+                <div id="status-result" style="margin-top: 15px; display: none; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; font-size: 13px; font-family: monospace;"></div>
+            </div>
+
+            <div id="indexing-log" style="margin-top: 20px; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; font-family: monospace; font-size: 12px; color: #4caf50; display: none; max-height: 200px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS SECTION -->
+    <div id="reports" class="section">
+        <div class="header">
+            <div class="title">User Reports & Feedback</div>
+            <button class="btn-primary" onclick="loadReports()">Refresh</button>
+        </div>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Type</th>
+                        <th>Asset ID</th>
+                        <th>Message / Reasons</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="reports-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const R2_DOMAIN = "{{ r2_domain }}";
+    let currentOrphans = [];
+    let dbUnanalyzedFiles = [];
+
+    // --- UI HELPERS ---
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        
+        let icon = '';
+        if(type === 'success') icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#4caf50" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+        else if(type === 'error') icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+        else icon = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+
+        toast.innerHTML = `${icon} <span>${message}</span>`;
+        container.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.animation = 'fadeOut 0.3s ease forwards';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+
+    function showConfirm(message, onConfirm) {
+        const modal = document.getElementById('confirm-modal');
+        const msgEl = document.getElementById('confirm-msg');
+        const yesBtn = document.getElementById('confirm-yes-btn');
+        
+        msgEl.textContent = message;
+        modal.style.display = 'flex';
+        
+        yesBtn.onclick = () => {
+            modal.style.display = 'none';
+            onConfirm();
+        };
+    }
+
+    function closeConfirm() {
+        document.getElementById('confirm-modal').style.display = 'none';
+    }
+
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('active');
+        document.querySelector('.sidebar-overlay').classList.toggle('active');
+    }
+
+    // --- NAVIGATION ---
+    function showSection(id, el) {
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        el.classList.add('active');
+        
+        if(id === 'dashboard') refreshStats();
+        if(id === 'users') loadUsers();
+        if(id === 'reports') loadReports();
+        if(id === 'indexing') loadIndexingStats();
+
+        // Close sidebar on mobile after selection
+        if(window.innerWidth <= 768) {
+            toggleSidebar();
+        }
+    }
+
+    // --- STATS ---
+    function refreshStats() {
+        fetch('/api/admin/stats')
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('stat-users').textContent = data.stats.users;
+                    document.getElementById('stat-images').textContent = data.stats.images;
+                    document.getElementById('stat-logos').textContent = data.stats.logos;
+                    document.getElementById('stat-downloads').textContent = data.stats.downloads;
+                    document.getElementById('stat-generations').textContent = data.stats.generations;
+                }
+            });
+    }
+
+    // --- USERS ---
+    function loadUsers() {
+        const tbody = document.getElementById('users-table-body');
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Loading...</td></tr>';
+        
+        fetch('/api/admin/users')
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if(data.success) {
+                    data.users.forEach(user => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(user.created_at * 1000).toLocaleDateString();
+                        tr.innerHTML = `
+                            <td>#${user.id}</td>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <img src="${user.avatar ? (user.avatar.startsWith('/static/') ? user.avatar : '/static/avatars/'+user.avatar) : 'https://via.placeholder.com/30'}" style="width:30px; height:30px; border-radius:50%;">
+                                    ${user.username}
+                                </div>
+                            </td>
+                            <td>${user.email || '-'}</td>
+                            <td><span style="background: ${user.role==='admin'?'rgba(59,130,246,0.2)':'rgba(255,255,255,0.1)'}; color: ${user.role==='admin'?'#60a5fa':'#9ca3af'}; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${user.role}</span></td>
+                            <td>${date}</td>
+                            <td>
+                                ${user.role !== 'admin' ? `<button class="btn-sm btn-danger" onclick="deleteUser(${user.id})">Delete</button>` : ''}
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            });
+    }
+
+    function deleteUser(id) {
+        showConfirm('Are you sure you want to delete this user? This cannot be undone.', () => {
+            fetch('/api/admin/delete_user', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: id})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) loadUsers();
+                else showToast('Error: ' + data.message, 'error');
+            });
+        });
+    }
+
+    // --- BULK UPLOAD ---
+    let pendingFiles = [];
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadPendingUploads();
+    });
+
+    // Helper: Resize image in browser
+    function resizeImage(img, maxWidth, quality) {
+        return new Promise(resolve => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxWidth) {
+                    height = Math.round(height * (maxWidth / width));
+                    width = maxWidth;
+                }
+            } else {
+                if (height > maxWidth) {
+                    width = Math.round(width * (maxWidth / height));
+                    height = maxWidth;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingEnabled = true;
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            canvas.toBlob(blob => {
+                resolve(blob);
+            }, 'image/webp', quality);
+        });
+    }
+
+    function handleFiles(files) {
+        Array.from(files).forEach(file => {
+            uploadTemp(file);
+        });
+    }
+
+    async function uploadTemp(file) {
+        // Create UI Item
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        item.innerHTML = `
+            <div class="file-preview">...</div>
+            <div class="file-inputs">
+                <div style="grid-column: span 3; color: var(--text-muted); font-size: 14px; display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 16px; height: 16px; border: 2px solid var(--text-muted); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                    <span class="status-text">Preparing...</span>
+                </div>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted);">Processing...</div>
+        `;
+        document.getElementById('fileList').appendChild(item);
+        
+        const statusText = item.querySelector('.status-text');
+        const formData = new FormData();
+
+        try {
+            // Client-side compression for images
+            if (file.type.startsWith('image/') && !file.type.includes('svg')) {
+                statusText.textContent = "Compressing (Client-side)...";
+                
+                const imgObj = await new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve(img);
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(file);
+                });
+
+                const blobMedium = await resizeImage(imgObj, 2048, 0.9);
+                const blobSmall = await resizeImage(imgObj, 1024, 0.8);
+                const blobTiny = await resizeImage(imgObj, 600, 0.85);
+
+                formData.append('client_processed', 'true');
+                formData.append('file_original', file);
+                formData.append('file_medium', blobMedium, "medium.webp");
+                formData.append('file_small', blobSmall, "small.webp");
+                formData.append('file_tiny', blobTiny, "tiny.webp");
+                
+                // Metadata
+                formData.append('resolution', `${imgObj.width}x${imgObj.height}`);
+                let quality = 'HD';
+                const longSide = Math.max(imgObj.width, imgObj.height);
+                if (longSide >= 3840) quality = '4K';
+                else if (longSide >= 2560) quality = '2K';
+                else if (longSide >= 1920) quality = 'FHD';
+                formData.append('quality', quality);
+
+                URL.revokeObjectURL(imgObj.src);
+            } else {
+                formData.append('file', file);
+            }
+
+            statusText.textContent = "Uploading & Analyzing...";
+
+            // 1. Upload
+            const upRes = await fetch('/upload', { method: 'POST', body: formData }).then(r => r.json());
+            if (!upRes.success) throw new Error(upRes.message);
+
+            // Update Preview
+            const previewUrl = upRes.r2_data ? (R2_DOMAIN ? `${R2_DOMAIN}/${upRes.r2_data.filename_small}` : `/uploads/${upRes.r2_data.filename_small}`) : '';
+            if(previewUrl) {
+                item.querySelector('.file-preview').innerHTML = `<img src="${previewUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:6px;">`;
+            } else {
+                item.querySelector('.file-preview').innerHTML = '✓';
+                item.querySelector('.file-preview').style.color = '#4caf50';
+            }
+
+            // 2. Analyze
+            const queueRes = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: upRes.filename})
+            }).then(r => r.json());
+
+            if (!queueRes.success) throw new Error(queueRes.message);
+
+            // 3. Poll
+            let aiRes;
+            if (queueRes.data) {
+                aiRes = { success: true, data: queueRes.data };
+            } else {
+                aiRes = await pollTaskStatus(queueRes.task_id);
+            }
+
+            if (!aiRes.success) throw new Error(aiRes.error);
+
+            const data = aiRes.data;
+            // Handle nested translations if present
+            let name = data.name || file.name;
+            let keywords = data.keywords || '';
+            let category = data.category || 'image';
+            
+            if (data.translations && data.translations.en) {
+                name = data.translations.en.name;
+                keywords = data.translations.en.keywords;
+            }
+
+            // Update UI with AI Data
+            item.querySelector('.file-inputs').innerHTML = `
+                <input type="text" class="input name-input" placeholder="Title">
+                <input type="text" class="input tags-input" placeholder="Keywords">
+                <select class="input cat-input">
+                    <option value="image">Image</option>
+                    <option value="logo">Logo</option>
+                </select>
+            `;
+            item.querySelector('.name-input').value = name;
+            item.querySelector('.tags-input').value = Array.isArray(keywords) ? keywords.join(', ') : keywords;
+            item.querySelector('.cat-input').value = category.toLowerCase() === 'logo' ? 'logo' : 'image';
+
+            const statusDiv = item.lastElementChild;
+            statusDiv.innerHTML = `<div style="color:#4caf50; margin-bottom:5px;">Analyzed</div><button class="btn-sm btn-danger" onclick="removePending('${upRes.filename}', this)">X</button>`;
+            statusDiv.style.display = 'flex';
+            statusDiv.style.flexDirection = 'column';
+            statusDiv.style.alignItems = 'flex-end';
+
+            pendingFiles.push({
+                element: item,
+                filename: upRes.filename,
+                originalName: file.name,
+                r2_data: upRes.r2_data,
+                ai_data: data
+            });
+
+            document.getElementById('publishBtn').style.display = 'block';
+
+        } catch (e) {
+            console.error(e);
+            item.querySelector('.file-inputs').innerHTML = `<div style="color:var(--danger);">Error: ${e.message}</div>`;
+            item.lastElementChild.textContent = 'Failed';
+            item.lastElementChild.style.color = 'var(--danger)';
+        }
+    }
+
+    async function pollTaskStatus(taskId) {
+        while(true) {
+            await new Promise(r => setTimeout(r, 2000));
+            try {
+                let statusRes = await fetch(`/api/check_task/${taskId}`).then(r=>r.json());
+                if(statusRes.status === 'completed') return { success: true, data: statusRes.data };
+                if(statusRes.status === 'failed') return { success: false, error: statusRes.error };
+            } catch(e) { return { success: false, error: e.message }; }
+        }
+    }
+
+    function loadPendingUploads() {
+        fetch('/api/admin/get_pending_uploads')
+            .then(r => r.json())
+            .then(data => {
+                if(data.success && data.files.length > 0) {
+                    data.files.forEach(file => {
+                        restorePendingItem(file);
+                    });
+                    document.getElementById('publishBtn').style.display = 'block';
+                }
+            });
+    }
+
+    function restorePendingItem(file) {
+        const item = document.createElement('div');
+        item.className = 'file-item';
+        const displayName = file.original_name ? file.original_name.split('.')[0] : file.filename;
+        
+        item.innerHTML = `
+            <div class="file-preview" style="color:#4caf50">✓</div>
+            <div class="file-inputs">
+                <input type="text" class="input name-input" placeholder="Title">
+                <input type="text" class="input tags-input" placeholder="Keywords (comma separated)">
+                <select class="input cat-input">
+                    <option value="image">Image</option>
+                    <option value="logo">Logo</option>
+                </select>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:5px;">
+                <div style="font-size:12px; color:#4caf50;">Restored</div>
+                <button class="btn-sm btn-danger" onclick="removePending('${file.filename}', this)">X</button>
+            </div>
+        `;
+        item.querySelector('.name-input').value = displayName;
+        document.getElementById('fileList').appendChild(item);
+        
+        pendingFiles.push({
+            element: item,
+            filename: file.filename,
+            originalName: file.original_name,
+            r2_data: file.r2_data
+        });
+    }
+
+    function removePending(filename, btn) {
+        showConfirm('Remove this pending upload?', () => {
+            fetch('/api/admin/delete_pending_upload', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({filename: filename})
+            }).then(() => {
+                const row = btn.closest('.file-item');
+                row.remove();
+                pendingFiles = pendingFiles.filter(f => f.filename !== filename);
+                if(pendingFiles.length === 0) document.getElementById('publishBtn').style.display = 'none';
+            });
+        });
+    }
+
+    // --- AI TOOLS ---
+    function scanUnanalyzedDB() {
+        const statusEl = document.getElementById('db-scan-status');
+        statusEl.textContent = "Scanning R2 Bucket for unregistered files...";
+        
+        fetch('/api/admin/scan_r2')
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    dbUnanalyzedFiles = data.orphans; // Now using R2 Orphans
+                    if(dbUnanalyzedFiles.length === 0) {
+                        statusEl.textContent = "No unregistered images found in R2.";
+                    } else {
+                        statusEl.textContent = `Found ${dbUnanalyzedFiles.length} unregistered images in R2. Generating prompt...`;
+                        generatePromptFromDB(dbUnanalyzedFiles);
+                    }
+                } else {
+                    statusEl.textContent = "Error scanning DB: " + data.message;
+                }
+            })
+            .catch(e => {
+                statusEl.textContent = "Network error during scan.";
+            });
+    }
+
+    function generatePromptFromDB(files) {
+        const container = document.getElementById('ai-prompt-container');
+        const promptBox = document.getElementById('ai-prompt-text');
+        
+        const fileLinks = files.map(f => {
+            // Handle both DB object (link_small) and Orphan object (display_key)
+            const key = f.link_small || f.display_key;
+            let url = `/uploads/${key}`;
+            if (R2_DOMAIN && R2_DOMAIN !== 'None' && R2_DOMAIN.length > 0) {
+                url = `${R2_DOMAIN}/${key}`;
+            }
+            return url;
+        });
+
+        const categories = [
+            "Abstract", "Aesthetic", "AI Art", "Airplanes", "Animals", "Anime", 
+            "Architecture", "Art", "Astronomy", "Backgrounds", "Beach", 
+            "Biology", "Business", "Cars", "Cartoons", "Celebrities", 
+            "City", "Cityscape", "Clouds", "Computers", "Concept Art", 
+            "Creative", "Cyberpunk", "Dark", "Design", "Digital Art", 
+            "Education", "Fantasy", "Fashion", "Film", "Flowers", 
+            "Food", "Forest", "Futuristic", "Gaming", "Geometric", 
+            "Gradients", "Graphics", "Health", "Holidays", "Home", 
+            "Icons", "Illustrations", "Industrial", "Interiors", 
+            "Landscape Photography", "Landscapes", "Lifestyle", "Love", 
+            "Macro", "Minimal", "Mountains", "Music", "Nature", 
+            "Neon", "Night", "Ocean", "Patterns", "People", 
+            "Pets", "Photography", "Portraits", "Quotes", 
+            "Retro", "Robotics", "Sci-Fi", "Seasons", "Sky", 
+            "Social Media", "Space", "Sports", "Street", 
+            "Street Photography", "Surreal", "Technology", 
+            "Textures", "Time-lapse", "Travel", "Typography", 
+            "Underwater", "Urban", "Vector", "Vehicles", 
+            "Vintage", "Water", "Waterfalls", "Weather", 
+            "Wildlife", "Winter", "Woods", "Zen"
+        ];
+
+        const prompt = `I have a list of images. Please analyze them and return a JSON array and note dont just look at the links fille name and halusinate a responds open the link and look at the fille pixels to do a good visual describtion.
+For each image, provide:
+- "url": The exact URL provided below (CRITICAL: This is the ID used to match data to the image. Do not change it.)
+- "name": A creative title (4-6 words)
+- "description": A short description (10-15 words)
+- "keywords": Comma-separated keywords (10-15)
+- "color": Dominant color name
+- "category": Choose the single best fit ONLY from this specific list: [${categories.join(', ')}]
+- "resolution": "WidthxHeight" (e.g. 1920x1080)
+- "orientation": "Horizontal", "Vertical", or "Square"
+
+Here are the image links:
+${JSON.stringify(fileLinks, null, 2)}
+
+Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL has a corresponding output object.`;
+
+        promptBox.value = prompt;
+        container.style.display = 'block';
+        container.scrollIntoView({behavior: 'smooth'});
+    }
+
+    function generatePromptFromPending() {
+        if(pendingFiles.length === 0) {
+            showToast("No pending files found. Please upload files first.", "warning");
+            return;
+        }
+        
+        const container = document.getElementById('ai-prompt-container');
+        const promptBox = document.getElementById('ai-prompt-text');
+        
+        // Build list of URLs
+        const fileLinks = pendingFiles.map(f => {
+            let url = `/uploads/${f.r2_data.filename_small}`;
+            if (R2_DOMAIN && R2_DOMAIN !== 'None' && R2_DOMAIN.length > 0) {
+                url = `${R2_DOMAIN}/${f.r2_data.filename_small}`;
+            }
+            return url;
+        });
+
+        const categories = [
+            "Abstract", "Aesthetic", "AI Art", "Airplanes", "Animals", "Anime", 
+            "Architecture", "Art", "Astronomy", "Backgrounds", "Beach", 
+            "Biology", "Business", "Cars", "Cartoons", "Celebrities", 
+            "City", "Cityscape", "Clouds", "Computers", "Concept Art", 
+            "Creative", "Cyberpunk", "Dark", "Design", "Digital Art", 
+            "Education", "Fantasy", "Fashion", "Film", "Flowers", 
+            "Food", "Forest", "Futuristic", "Gaming", "Geometric", 
+            "Gradients", "Graphics", "Health", "Holidays", "Home", 
+            "Icons", "Illustrations", "Industrial", "Interiors", 
+            "Landscape Photography", "Landscapes", "Lifestyle", "Love", 
+            "Macro", "Minimal", "Mountains", "Music", "Nature", 
+            "Neon", "Night", "Ocean", "Patterns", "People", 
+            "Pets", "Photography", "Portraits", "Quotes", 
+            "Retro", "Robotics", "Sci-Fi", "Seasons", "Sky", 
+            "Social Media", "Space", "Sports", "Street", 
+            "Street Photography", "Surreal", "Technology", 
+            "Textures", "Time-lapse", "Travel", "Typography", 
+            "Underwater", "Urban", "Vector", "Vehicles", 
+            "Vintage", "Water", "Waterfalls", "Weather", 
+            "Wildlife", "Winter", "Woods", "Zen"
+        ];
+
+        const prompt = `I have a list of images. Please analyze them and return a JSON array and note dont just look at the links fille name and halusinate a responds open the link and look at the fille pixels to do a good visual describtion.
+For each image, provide:
+- "url": The exact URL provided below (CRITICAL: This is the ID used to match data to the image. Do not change it.)
+- "name": A creative title (4-6 words)
+- "description": A short description (10-15 words)
+- "keywords": Comma-separated keywords (10-15)
+- "color": Dominant color name
+- "category": Choose the single best fit ONLY from this specific list: [${categories.join(', ')}]
+- "resolution": "WidthxHeight" (e.g. 1920x1080)
+- "orientation": "Horizontal", "Vertical", or "Square"
+
+Here are the image links:
+${JSON.stringify(fileLinks, null, 2)}
+
+Return ONLY the valid JSON array. No markdown, no text. Ensure every input URL has a corresponding output object.`;
+
+        promptBox.value = prompt;
+        container.style.display = 'block';
+    }
+
+    function copyPrompt() {
+        const copyText = document.getElementById("ai-prompt-text");
+        copyText.select();
+        document.execCommand("copy");
+        showToast("Prompt copied to clipboard!", "success");
+    }
+
+    async function processAIImport() {
+        const jsonInput = document.getElementById('ai-json-input').value;
+        let aiData = [];
+        
+        try {
+            // Clean up potential markdown code blocks
+            const cleanJson = jsonInput.replace(/```json/g, '').replace(/```/g, '').trim();
+            aiData = JSON.parse(cleanJson);
+        } catch(e) {
+            showToast("Invalid JSON format. Please check your input.", "error");
+            return;
+        }
+
+        if(!Array.isArray(aiData)) {
+            showToast("Input must be a JSON array.", "error");
+            return;
+        }
+
+        // Check if we have files to match against
+        if (pendingFiles.length === 0 && dbUnanalyzedFiles.length === 0) {
+            showToast("No pending uploads or scanned orphans found.", "warning");
+            return;
+        }
+
+        const btn = document.querySelector('#aitools .btn-primary:last-child');
+        btn.textContent = "Processing...";
+        btn.disabled = true;
+
+        let matchCount = 0;
+        let unmatchedCount = 0;
+        let publishPromises = [];
+
+        // Helper to get base name for loose matching
+        // e.g. "small_image-123.webp" -> "image-123"
+        // e.g. "https://site.com/uploads/image-123.jpg" -> "image-123"
+        const getBaseName = (str) => {
+            if (!str) return '';
+            let name = str.split('/').pop().split('?')[0]; // Get filename
+            name = name.replace(/^(small_|medium_)/, ''); // Remove prefixes
+            name = name.split('.').slice(0, -1).join('.'); // Remove extension
+            return name.toLowerCase().trim();
+        };
+
+        // Map AI data to Pending Files
+        for (const item of aiData) {
+            let decodedUrl = item.url || '';
+            try { decodedUrl = decodeURIComponent(decodedUrl); } catch(e) {}
+
+            // Find matching file by checking if URL contains the filename
+            const matchIndex = pendingFiles.findIndex(f => item.url && item.url.includes(f.r2_data.filename_small));
+            
+            if(matchIndex !== -1) {
+                const fileObj = pendingFiles[matchIndex];
+                const el = fileObj.element;
+                
+                // Auto-fill inputs (visual feedback)
+                el.querySelector('.name-input').value = item.name || '';
+                el.querySelector('.tags-input').value = Array.isArray(item.keywords) ? item.keywords.join(', ') : (item.keywords || '');
+                
+                // Get the selected type (image/logo) from the dropdown
+                const type = el.querySelector('.cat-input').value || 'image';
+                
+                // Trigger Publish
+                const p = fetch('/publish', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        filename: fileObj.filename,
+                        name: item.name,
+                        description: item.description,
+                        key_word: Array.isArray(item.keywords) ? item.keywords.join(', ') : item.keywords,
+                        color: item.color,
+                        category: type,
+                        content_category: item.category,
+                        r2_data: fileObj.r2_data,
+                        ai_data: item
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if(data.success) el.remove();
+                    return data;
+                });
+                
+                publishPromises.push(p);
+                matchCount++;
+            } else {
+                // Check DB Unanalyzed Files
+                // For Orphans, we match against display_key
+                const dbMatch = dbUnanalyzedFiles.find(f => {
+                    // Robust matching: Check both raw and decoded URL against display_key or link_small
+                    // AND check base name matching for cross-format (jpg vs webp) support
+                    const key = f.display_key || f.link_small;
+                    if (!key) return false;
+                    
+                    if (item.url && item.url.includes(key)) return true;
+                    if (decodedUrl && decodedUrl.includes(key)) return true;
+                    
+                    // Base Name Match (The Fix)
+                    if (getBaseName(item.url) === getBaseName(key)) return true;
+                    
+                    return false;
+                });
+                
+                if (dbMatch) {
+                    // It's an orphan -> We must PUBLISH it (Insert)
+                    // Construct r2_data from the orphan group files
+                    const r2Data = {
+                        filename_small: dbMatch.files.find(k => k.includes('small_')) || dbMatch.display_key,
+                        filename_medium: dbMatch.files.find(k => k.includes('medium_')) || dbMatch.display_key,
+                        filename_original: dbMatch.files.find(k => !k.includes('small_') && !k.includes('medium_')) || dbMatch.display_key,
+                        resolution: 'Unknown', 
+                        quality: 'HD'
+                    };
+
+                    const p = fetch('/publish', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            name: item.name,
+                            description: item.description,
+                            key_word: Array.isArray(item.keywords) ? item.keywords.join(', ') : item.keywords,
+                            color: item.color,
+                            category: 'image', // Default to image for orphans
+                            content_category: item.category,
+                            r2_data: r2Data,
+                            ai_data: item
+                        })
+                    }).then(r => r.json());
+                    
+                    publishPromises.push(p);
+                    matchCount++;
+                } else {
+                    unmatchedCount++;
+                }
+            }
+        }
+
+        // Wait for all publishes to complete
+        await Promise.all(publishPromises);
+
+        // Clean up pendingFiles array
+        pendingFiles = pendingFiles.filter(f => document.body.contains(f.element));
+        
+        btn.textContent = "Process & Publish";
+        btn.disabled = false;
+        document.getElementById('ai-json-input').value = '';
+        
+        if(pendingFiles.length === 0 && dbUnanalyzedFiles.length === 0) {
+            document.getElementById('publishBtn').style.display = 'none';
+        }
+        
+        let msg = `Processed ${matchCount} files.`;
+        if (unmatchedCount > 0) {
+            msg += `\nWarning: ${unmatchedCount} items from AI response could not be matched (Check if you scanned R2).`;
+        }
+        showToast(msg, unmatchedCount > 0 ? "warning" : "success");
+        refreshStats();
+        // Refresh scan to show they are gone
+        if (dbUnanalyzedFiles.length > 0) scanR2();
+    }
+
+    function publishAll() {
+        const btn = document.getElementById('publishBtn');
+        btn.textContent = 'Publishing...';
+        btn.disabled = true;
+
+        const promises = pendingFiles.map(fileObj => {
+            const el = fileObj.element;
+            const name = el.querySelector('.name-input').value;
+            const keywords = el.querySelector('.tags-input').value;
+            const category = el.querySelector('.cat-input').value;
+            const aiData = fileObj.ai_data || {};
+
+            return fetch('/publish', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    filename: fileObj.filename,
+                    name: name,
+                    key_word: keywords,
+                    category: category,
+                    description: aiData.description || "Uploaded via Admin Dashboard",
+                    r2_data: fileObj.r2_data, // Pass R2 data to publish
+                    ai_data: aiData
+                })
+            }).then(r => r.json()).then(data => {
+                if(data.success) {
+                    el.remove();
+                    return true;
+                }
+                return false;
+            });
+        });
+
+        Promise.all(promises).then(() => {
+            pendingFiles = [];
+            btn.textContent = 'Publish All';
+            btn.disabled = false;
+            btn.style.display = 'none';
+            showToast('Batch processing complete!', 'success');
+            refreshStats();
+        });
+    }
+
+    // --- R2 SCAN ---
+    function scanR2() {
+        const tbody = document.getElementById('r2-table-body');
+        document.getElementById('btn-delete-all').style.display = 'none';
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Scanning R2 Bucket...</td></tr>';
+        
+        fetch('/api/admin/scan_r2')
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if(data.success) {
+                    currentOrphans = data.orphans;
+                    dbUnanalyzedFiles = data.orphans; // Sync with AI tools
+                    if(data.orphans.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#4caf50;">All clean! No orphaned files found.</td></tr>';
+                        return;
+                    }
+                    document.getElementById('btn-delete-all').style.display = 'block';
+                    document.getElementById('btn-delete-all').textContent = `Delete All (${data.orphans.length} Groups)`;
+
+                    data.orphans.forEach(file => {
+                        const tr = document.createElement('tr');
+                        
+                        // Determine URL (Prefer Direct R2 if available)
+                        let fileUrl = `/uploads/${encodeURIComponent(file.display_key)}`;
+                        if (R2_DOMAIN && R2_DOMAIN !== 'None' && R2_DOMAIN.length > 0) {
+                            fileUrl = `${R2_DOMAIN}/${file.display_key}`;
+                        }
+
+                        // Preview
+                        const tdPreview = document.createElement('td');
+                        const img = document.createElement('img');
+                        img.src = fileUrl;
+                        img.style.width = '50px';
+                        img.style.height = '50px';
+                        img.style.objectFit = 'cover';
+                        img.style.borderRadius = '4px';
+                        img.onerror = function() { this.style.display = 'none'; };
+                        tdPreview.appendChild(img);
+
+                        // Key Link
+                        const tdKey = document.createElement('td');
+                        const link = document.createElement('a');
+                        link.href = fileUrl;
+                        link.target = "_blank";
+                        link.style.color = "var(--primary)";
+                        link.style.wordBreak = "break-all";
+                        link.textContent = file.display_key;
+                        tdKey.appendChild(link);
+                        
+                        const tdSize = document.createElement('td');
+                        tdSize.textContent = `${(file.size / 1024).toFixed(1)} KB`;
+                        
+                        const tdDate = document.createElement('td');
+                        tdDate.textContent = new Date(file.last_modified).toLocaleDateString();
+                        
+                        const tdAction = document.createElement('td');
+                        const btn = document.createElement('button');
+                        btn.className = "btn-sm btn-danger";
+                        btn.textContent = "Delete";
+                        btn.onclick = function() { deleteOrphan(file.files, this); };
+                        tdAction.appendChild(btn);
+                        
+                        tr.appendChild(tdPreview);
+                        tr.appendChild(tdKey);
+                        tr.appendChild(tdSize);
+                        tr.appendChild(tdDate);
+                        tr.appendChild(tdAction);
+                        
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--danger);">Error: ${data.message}</td></tr>`;
+                }
+            })
+            .catch(err => {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--danger);">Network Error: ${err.message}</td></tr>`;
+            });
+    }
+
+    function deleteAllOrphans() {
+        if(!currentOrphans.length) return;
+        showConfirm(`WARNING: You are about to delete ${currentOrphans.length} groups of files permanently from R2.\n\nThis cannot be undone. Continue?`, () => {
+            const btn = document.getElementById('btn-delete-all');
+            btn.disabled = false;
+            btn.textContent = "Deleting...";
+
+            // Collect all file keys from all groups
+            let allFiles = [];
+            currentOrphans.forEach(group => {
+                allFiles.push(...group.files);
+            });
+
+            fetch('/api/admin/delete_orphan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({files: allFiles})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    showToast('Successfully deleted all orphaned files.', 'success');
+                    scanR2(); // Refresh
+                } else {
+                    showToast('Error: ' + data.message, 'error');
+                    btn.disabled = false;
+                    btn.textContent = "Delete All Orphans";
+                }
+            })
+            .catch(err => {
+                showToast('Network Error: ' + err.message, 'error');
+                btn.disabled = false;
+            });
+        });
+    }
+
+    function deleteOrphan(files, btn) {
+        showConfirm('Delete ' + files.length + ' related files permanently?', () => {
+            const row = btn.closest('tr');
+            btn.textContent = '...';
+            
+            fetch('/api/admin/delete_orphan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({files: files})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) row.remove();
+                else {
+                    showToast('Error: ' + data.message, 'error');
+                    btn.textContent = 'Delete';
+                }
+            });
+        });
+    }
+
+    // --- SITEMAP ---
+    function generateSitemap() {
+        const btn = document.querySelector('#sitemap .btn-primary');
+        const originalText = btn.textContent;
+        btn.textContent = "Generating...";
+        btn.disabled = true;
+
+        fetch('/api/admin/generate_sitemap', {
+            method: 'POST'
+        })
+        .then(r => r.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            if(data.success) {
+                showToast(data.message, 'success');
+            } else {
+                showToast('Error: ' + data.message, 'error');
+            }
+        })
+        .catch(err => {
+            btn.disabled = false;
+            btn.textContent = originalText;
+            showToast('Network Error', 'error');
+        });
+    }
+
+    // --- INDEXING ---
+    function loadIndexingStats() {
+        fetch('/api/admin/indexing/status')
+            .then(r => r.json())
+            .then(data => {
+                if(data.success) {
+                    document.getElementById('idx-total').textContent = data.total;
+                    document.getElementById('idx-submitted').textContent = data.indexed;
+                    document.getElementById('idx-pending').textContent = data.pending;
+                    document.getElementById('idx-quota').textContent = `${data.quota_left} / ${data.daily_limit}`;
+                }
+            });
+    }
+
+    function submitManualUrl() {
+        const input = document.getElementById('manual-index-url');
+        const url = input.value.trim();
+        const log = document.getElementById('indexing-log');
+        
+        if (!url) return showToast("Please enter a URL", "error");
+        
+        log.style.display = 'block';
+        log.innerHTML += `<div>> Submitting manual URL: ${url}...</div>`;
+        
+        fetch('/api/admin/indexing/submit', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url: url })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                log.innerHTML += `<div>> Success: URL submitted.</div>`;
+                input.value = '';
+                loadIndexingStats();
+            } else {
+                log.innerHTML += `<div style="color:#ef4444">> Error: ${data.message}</div>`;
+            }
+            log.scrollTop = log.scrollHeight;
+        })
+        .catch(e => {
+            log.innerHTML += `<div style="color:#ef4444">> Network Error: ${e.message}</div>`;
+        });
+    }
+
+    function checkUrlStatus() {
+        const input = document.getElementById('check-status-url');
+        const url = input.value.trim();
+        const resultBox = document.getElementById('status-result');
+        
+        if (!url) return showToast("Please enter a URL", "error");
+        
+        resultBox.style.display = 'block';
+        resultBox.innerHTML = '> Checking status...';
+        resultBox.style.color = 'var(--text-muted)';
+
+        fetch('/api/admin/indexing/check_status', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ url: url })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                const meta = data.data;
+                const latest = meta.latestUpdate || {};
+                let html = `<div style="color:#4caf50; font-weight:bold; margin-bottom:5px;">✅ Google is aware of this URL</div>`;
+                html += `<div><strong>URL:</strong> ${meta.url}</div>`;
+                if (latest.notifyTime) {
+                    html += `<div><strong>Last Notified:</strong> ${new Date(latest.notifyTime).toLocaleString()}</div>`;
+                }
+                if (latest.type) {
+                    html += `<div><strong>Type:</strong> ${latest.type}</div>`;
+                }
+                resultBox.innerHTML = html;
+                resultBox.style.color = 'var(--text)';
+            } else {
+                resultBox.innerHTML = `<div style="color:#ef4444; font-weight:bold;">❌ ${data.message}</div>`;
+            }
+        })
+        .catch(e => {
+            resultBox.innerHTML = `<div style="color:#ef4444;">Error: ${e.message}</div>`;
+        });
+    }
+    
+
+    // --- REPORTS ---
+    function loadReports() {
+        const tbody = document.getElementById('reports-table-body');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading...</td></tr>';
+        
+        fetch('/api/admin/reports')
+            .then(r => r.json())
+            .then(data => {
+                tbody.innerHTML = '';
+                if(data.success && data.reports.length > 0) {
+                    data.reports.forEach(r => {
+                        const tr = document.createElement('tr');
+                        const date = new Date(r.created_at * 1000).toLocaleDateString();
+                        const reasons = Array.isArray(r.reasons) ? r.reasons.join(', ') : r.reasons;
+                        const assetLink = r.asset_id ? `<a href="/view/${r.category}/${r.asset_id}" target="_blank" style="color:var(--primary)">#${r.asset_id}</a>` : '-';
+                        
+                        tr.innerHTML = `
+                            <td>${r.id}</td>
+                            <td>${r.username || 'Unknown'} <br><span style="font-size:10px; color:var(--text-muted)">${r.email || ''}</span></td>
+                            <td><span style="background: ${r.category==='feedback'?'rgba(48, 209, 88, 0.2)':'rgba(239, 68, 68, 0.2)'}; color: ${r.category==='feedback'?'#30d158':'#ef4444'}; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${r.category}</span></td>
+                            <td>${assetLink}</td>
+                            <td><div style="max-width:300px; overflow:hidden; text-overflow:ellipsis;"><strong>${reasons}</strong><br>${r.message}</div></td>
+                            <td>${date}</td>
+                            <td><button class="btn-sm btn-danger" onclick="deleteReport(${r.id})">Resolve/Delete</button></td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No reports found.</td></tr>';
+                }
+            });
+    }
+
+    function deleteReport(id) {
+        showConfirm('Mark this report as resolved and delete it?', () => {
+            fetch('/api/admin/delete_report', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({id: id})
+            }).then(r => r.json()).then(data => {
+                if(data.success) loadReports();
+                else showToast('Error: ' + data.message, 'error');
+            });
+        });
+    }
+
+    // Init
+    refreshStats();
+</script>
+
+</body>
+</html>
