@@ -1834,6 +1834,9 @@
             
             loadHeroImages();
 
+            // Ensure feed loads on mobile/desktop initially
+            loadNextHomeFeedSection();
+
             const sectionsContainer = document.getElementById('dynamic-sections-container');
             if (!sectionsContainer) return;
 
