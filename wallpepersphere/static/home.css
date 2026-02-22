@@ -4357,7 +4357,7 @@ input:checked + .slider:before {
                 height: 18px !important;
             }
             .hero-search-wrapper input {
-                padding-left: 30px !important;
+                padding-left: 8px !important;
                 font-size: 14px !important;
             }
             .hero-search-icon {
