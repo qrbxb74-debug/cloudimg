@@ -1053,6 +1053,14 @@
             loaded: false
         };
 
+        // Search State
+        let searchState = {
+            offset: 0,
+            loading: false,
+            hasMore: true,
+            currentParams: null
+        };
+
         // Public Profile State
         let publicProfileState = {
             offset: 0,
@@ -1467,6 +1475,14 @@
             window.performSearch = function(pushToHistory = true) {
                 if (!searchInput) return;
                 let rawQuery = searchInput.value.trim();
+
+                // Reset Search State
+                searchState = {
+                    offset: 0,
+                    loading: false,
+                    hasMore: true,
+                    currentParams: null
+                };
                 
                 // Mobile Optimization: Dismiss keyboard and scroll to top for immediate view
                 if(searchInput) searchInput.blur();
@@ -1488,6 +1504,13 @@
                 if(detectedRes) params.append('resolution', detectedRes);
                 if(detectedSize) params.append('size', detectedSize);
                 if(selectedSort) params.append('sort', selectedSort);
+
+                // Store base params for pagination
+                searchState.currentParams = new URLSearchParams(params);
+
+                // Add pagination for first fetch (10 items)
+                params.append('limit', 10);
+                params.append('offset', 0);
 
                 lastSearchParams = params.toString();
 
@@ -1566,6 +1589,10 @@
                                 return;
                             }
                             
+                            // Update state
+                            if (data.assets.length < 10) searchState.hasMore = false;
+                            searchState.offset += data.assets.length;
+
                             setupMasonryGrid(grid);
                             
                             // Reuse the existing rendering logic by setting the global galleryImages
@@ -1605,6 +1632,59 @@
                         createErrorCard(grid, "NETWORK_ERROR", () => window.performSearch());
                     });
             };
+
+        function loadMoreSearchResults() {
+            const grid = document.querySelector('#section-search .gallery-grid');
+            if (!grid || searchState.loading || !searchState.hasMore) return;
+            
+            searchState.loading = true;
+            
+            const params = new URLSearchParams(searchState.currentParams);
+            params.append('limit', 10);
+            params.append('offset', searchState.offset);
+            
+            fetch(`/api/search?${params.toString()}`)
+                .then(r => r.json())
+                .then(data => {
+                    searchState.loading = false;
+                    if (data.success) {
+                        if (data.assets.length < 10) searchState.hasMore = false;
+                        searchState.offset += data.assets.length;
+                        
+                        if (data.assets.length > 0) {
+                            // Append to global galleryImages for viewer navigation
+                            const newImages = data.assets.filter(item => item.type !== 'user');
+                            galleryImages.push(...newImages);
+
+                            data.assets.forEach((asset) => {
+                                let card;
+                                if (asset.type === 'user') {
+                                    card = createUserCard(asset);
+                                } else {
+                                    const filteredIndex = galleryImages.indexOf(asset);
+                                    card = createImageCard(asset, filteredIndex, galleryImages);
+                                }
+                                
+                                const cols = grid.querySelectorAll('.gallery-col');
+                                if (cols.length > 0) {
+                                    let target = cols[0];
+                                    cols.forEach(col => {
+                                        if (col.offsetHeight < target.offsetHeight) target = col;
+                                    });
+                                    target.appendChild(card);
+                                } else {
+                                    grid.appendChild(card);
+                                }
+                            });
+                        }
+                    } else {
+                        searchState.hasMore = false;
+                    }
+                })
+                .catch(e => {
+                    searchState.loading = false;
+                });
+        }
 
             // POPSTATE LISTENER FOR BROWSER BACK BUTTON
             window.addEventListener('popstate', (event) => {
@@ -1662,10 +1742,11 @@
                 const scrollTop = window.scrollY || document.documentElement.scrollTop;
                 const clientHeight = document.documentElement.clientHeight;
 
-                if (scrollTop + clientHeight >= scrollHeight - 2500) {
+                if (scrollTop + clientHeight >= scrollHeight - 500) {
                     const imagesSection = document.getElementById('section-images');
                     const publicProfileSection = document.getElementById('section-public-profile');
                     const homeSection = document.getElementById('section-home');
+                    const searchSection = document.getElementById('section-search');
                     
                     if (homeSection && homeSection.style.display !== 'none') {
                         loadNextHomeFeedSection();
@@ -1675,6 +1756,8 @@
                         loadGalleryImages();
                     } else if (publicProfileSection && publicProfileSection.style.display !== 'none') {
                         loadPublicProfileImages();
+                    } else if (searchSection && searchSection.style.display !== 'none') {
+                        loadMoreSearchResults();
                     }
                 }
             }); // <-- This was missing
@@ -1756,7 +1839,6 @@
 
             // Mobile Optimization: Skip fetching desktop-only sections
             if (window.innerWidth <= 768) {
-                loadNextHomeFeedSection();
                 return;
             }
 
@@ -1786,9 +1868,6 @@
 
                         // Load random images into the featured section
                         loadFeaturedImages();
-                        
-                        // Start Home Feed
-                        loadNextHomeFeedSection();
                     } else {
                         console.error('Failed to load home page sections:', data.message);
                     }
@@ -2029,7 +2108,7 @@
             const mobileSurfaceLoader = document.getElementById('mobileSurfaceLoader');
             if (window.innerWidth <= 768 && mobileSurfaceLoader) mobileSurfaceLoader.classList.add('active');
 
-            const limit = getDynamicLimit();
+            const limit = 10;
             setupMasonryGrid(grid);
             
             // Inject Skeletons
@@ -2800,7 +2879,7 @@
             if (!grid || publicProfileState.loading || !publicProfileState.hasMore) return;
             
             publicProfileState.loading = true;
-            const limit = getDynamicLimit();
+            const limit = 10;
             setupMasonryGrid(grid);
             
             fetch(`/api/assets/image?user_id=${publicProfileState.currentUserId}&offset=${publicProfileState.offset}&limit=${limit}`)
