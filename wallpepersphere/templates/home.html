@@ -177,7 +177,8 @@
             currentPage: {{ current_page|default(1)|tojson }},
             openGenerator: {{ open_generator|default(False)|tojson }},
             openSettings: {{ open_settings|default(False)|tojson }},
-            openAbout: {{ open_about|default(False)|tojson }}
+            openAbout: {{ open_about|default(False)|tojson }},
+            userId: {{ session.get('user_id')|default(None)|tojson }}
         };
     </script>
    
@@ -205,6 +206,40 @@
         [data-theme="light"] .hero-search-wrapper input::placeholder {
             color: #888 !important;
         }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .app-toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .app-toast {
+            background: rgba(30, 30, 30, 0.95);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+        }
+        .app-toast.active { opacity: 1; transform: translateY(0); }
+        .app-toast.success { border-color: #4caf50; color: #e8f5e9; }
+        .app-toast.error { border-color: #ff5252; color: #ffebee; }
     </style>
     <link rel="stylesheet" href="/static/home.css">
     <!-- Performance: Inline Critical CSS (Variables & Layout Skeleton) -->
@@ -263,6 +298,9 @@
     <div id="uploadModal" class="upload-overlay">
         <!-- Content will be injected here via JS -->
     </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="app-toast-container" id="appToastContainer"></div>
 
     <!-- GENERIC ERROR MODAL -->
     <div class="modal-overlay" id="generalErrorModal" style="z-index: 20001;">
@@ -603,14 +641,14 @@
             {% endif %}
             <a href="#" class="right-link filter-trigger" data-i18n="Filter">{{ t('Filter') }}</a>
             <a href="#" class="right-link settings-trigger" data-i18n="Settings">{{ t('Settings') }}</a>
-            <a href="#" class="right-link" onclick="openSettings('support'); return false;" data-i18n="Help & Support">{{ t('Help & Support') }}</a>
+            <a href="#" class="right-link" onclick="openSettings('about'); return false;" data-i18n="Help & Support">{{ t('Help & Support') }}</a>
         </div>
         <div class="right-footer">
             {% if not session.get('user_id') %}
             <a href="#" class="nav-btn signup-trigger" data-i18n="Join Community">{{ t('Join Community') }}</a>
             <a href="#" class="nav-btn secondary login-trigger" data-i18n="Login">{{ t('Login') }}</a>
             {% else %}
-            <a href="/logout" class="nav-btn secondary" data-i18n="Logout" onclick="localStorage.removeItem('user_session');">{{ t('Logout') }}</a>
+            <a href="#" class="nav-btn secondary" data-i18n="Logout" onclick="SessionMonitor.logout(); return false;">{{ t('Logout') }}</a>
             {% endif %}
         </div>
     </aside>
@@ -905,6 +943,80 @@
  <script>
         // R2 Domain for JS
         const R2_DOMAIN = "{{ r2_domain }}";
+
+        // ================= SESSION MONITOR SYSTEM =================
+        const SessionMonitor = {
+            init: function() {
+                // Sync Server State (Source of Truth) with Local Storage
+                const serverId = window.SERVER_CONFIG ? window.SERVER_CONFIG.userId : null;
+                const localSession = localStorage.getItem('user_session');
+                
+                if (!serverId && localSession) {
+                    // Server says Guest, but Local says User.
+                    // This usually means the session cookie expired.
+                    // We should clear local storage to avoid confusion.
+                    console.warn('Session mismatch: Server is Guest. Clearing local session.');
+                    localStorage.removeItem('user_session');
+                }
+            },
+
+            isLoggedIn: function() {
+                return !!this.getUserId();
+            },
+
+            getUserId: function() {
+                // 1. Runtime Config (Most accurate)
+                if (window.SERVER_CONFIG && window.SERVER_CONFIG.userId) return window.SERVER_CONFIG.userId;
+                
+                // 2. Local Storage (Fallback)
+                const local = localStorage.getItem('user_session');
+                if (local) {
+                    try { return JSON.parse(local).user_id; } catch(e) { return null; }
+                }
+                return null;
+            },
+
+            login: function(userData) {
+                localStorage.setItem('user_session', JSON.stringify(userData));
+                if (window.SERVER_CONFIG) window.SERVER_CONFIG.userId = userData.user_id;
+            },
+
+            logout: function() {
+                localStorage.removeItem('user_session');
+                if (window.SERVER_CONFIG) window.SERVER_CONFIG.userId = null;
+                window.location.href = '/logout';
+            }
+        };
+        SessionMonitor.init();
+
+        // ================= TOAST NOTIFICATION SYSTEM =================
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('appToastContainer');
+            if(!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `app-toast ${type}`;
+            
+            let icon = '';
+            if(type === 'success') icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+            else if(type === 'error') icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>';
+            else icon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>';
+            
+            toast.innerHTML = `${icon}<span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.add('active');
+            });
+            
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.remove('active');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        };
 
         // Check if we should force-open a viewer
         if(window.SERVER_CONFIG && window.SERVER_CONFIG.viewAsset){
@@ -2519,8 +2631,7 @@
 
                         // NEW: Handle Follow button
                         if (followBtn) {
-                            const sessionData = localStorage.getItem('user_session');
-                            const loggedInUserId = sessionData ? JSON.parse(sessionData).user_id : null;
+                            const loggedInUserId = SessionMonitor.getUserId();
 
                             // Always show the follow button. Guests will be prompted to log in.
                             followBtn.style.display = 'inline-flex';
@@ -2613,8 +2724,8 @@
             if (!targetId || !btn) return;
 
             // Client-side auth check
-            const sessionData = localStorage.getItem('user_session');
-            if (!sessionData) {
+            const currentUserId = SessionMonitor.getUserId();
+            if (!currentUserId) {
                 openAuthModal('signup');
                 return;
             }
@@ -2662,13 +2773,13 @@
                     if (data.message === 'AUTH_REQUIRED') {
                         openAuthModal('login');
                     } else {
-                        alert(data.message || 'An error occurred.');
+                        showToast(data.message || 'An error occurred.', 'error');
                     }
                 }
             } catch (e) {
                 btn.textContent = originalText;
                 btn.innerHTML = originalContent;
-                alert('Network error.');
+                showToast('Network error.', 'error');
             } finally {
                 btn.disabled = false;
             }
@@ -3538,12 +3649,17 @@
                 toggleMobileBackground(true);
             }
 
-            // Track View
-            fetch('/api/track/view', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({asset_id: asset.id, category: asset.category || 'image'})
-            }).catch(e => {});
+            // --- Bot Detection & Tracking ---
+            // Filter out bots/crawlers to ensure analytics data is accurate
+            const isBot = /bot|googlebot|crawler|spider|robot|crawling|facebookexternalhit/i.test(navigator.userAgent) || navigator.webdriver;
+            
+            if (!isBot && asset && asset.id) {
+                fetch('/api/track/view', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({asset_id: asset.id, category: asset.category_type || 'image'})
+                }).catch(e => console.warn('View tracking failed', e));
+            }
             
             const viewerLeft = document.querySelector('#imageViewerModal .viewer-left');
             const viewerScroll = document.querySelector('#imageViewerModal .viewer-scroll-view');
@@ -3638,8 +3754,7 @@
             const plusIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>';
             const checkIcon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
-            const sessionData = localStorage.getItem('user_session');
-            const loggedInUserId = sessionData ? JSON.parse(sessionData).user_id : null;
+            const loggedInUserId = SessionMonitor.getUserId();
 
             followBtns.forEach(btn => {
                 if(btn) {
@@ -3956,28 +4071,20 @@
                 .then(r => r.json())
                 .then(data => {
                     if (data.success) {
+                        SessionMonitor.login({
+                            username: data.username,
+                            avatar: data.avatar,
+                            role: data.role,
+                            user_id: data.user_id
+                        });
+
                         if (isLoginMode) {
-                            // Save user info to browser storage
-                            localStorage.setItem('user_session', JSON.stringify({
-                                username: data.username,
-                                avatar: data.avatar,
-                                role: data.role,
-                                user_id: data.user_id
-                            }));
                             window.location.reload();
                         } else { // On successful registration
                             errorMsg.textContent = "{{ t('Account created! Logging you in...') }}";
                             errorMsg.style.color = '#4caf50';
                             errorMsg.style.display = 'block';
                             
-                            // Save session to local storage for consistency
-                            localStorage.setItem('user_session', JSON.stringify({
-                                username: data.username,
-                                avatar: data.avatar,
-                                role: data.role,
-                                user_id: data.user_id
-                            }));
-
                             setTimeout(() => {
                                 window.location.reload();
                             }, 1500);
@@ -3998,6 +4105,11 @@
 
         // ================= LIKE FUNCTIONALITY =================
         async function toggleLike(btn) {
+            if (!SessionMonitor.isLoggedIn()) {
+                openAuthModal('signup');
+                return;
+            }
+
             const id = btn.dataset.id;
             const category = btn.dataset.category;
             
@@ -4024,6 +4136,11 @@
         }
 
         async function toggleSave(btn) {
+            if (!SessionMonitor.isLoggedIn()) {
+                openAuthModal('signup');
+                return;
+            }
+
             const id = btn.dataset.id;
             const category = btn.dataset.category;
             
@@ -4339,11 +4456,6 @@
             // Check for Auto-Open Settings
             else if (window.SERVER_CONFIG.openSettings) {
                 openSettings();
-                loadHomeContent();
-            }
-            // Check for Auto-Open About
-            else if (window.SERVER_CONFIG.openAbout) {
-                openSettings('about');
                 loadHomeContent();
             }
             // If we are on page > 1, we are already in the images section
