@@ -1,0 +1,1037 @@
+<script>
+    // Virtual Page View for SPA
+    if (typeof gtag === 'function') {
+        gtag('event', 'page_view', { page_title: 'Settings', page_path: '/settings' });
+    }
+</script>
+<div class="settings-wrapper">
+    <button class="close-settings-btn" onclick="closeSettings()" aria-label="Close settings">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+            stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+    </button>
+
+    <div class="settings-nav">
+        <div class="settings-title desktop-only">Settings</div>
+        <div class="nav-groups-container">
+            <div class="nav-group-label">Personal</div>
+            <button class="set-nav-item {% if session.get('user_id') %}active{% endif %}"
+                onclick="{% if session.get('user_id') %}switchTab('account'){% else %}closeSettings(); document.querySelector('.signup-trigger').click();{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg> Account
+            </button>
+            <button class="set-nav-item {% if not session.get('user_id') %}active{% endif %}"
+                onclick="switchTab('appearance')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M12 2v20M2 12h20"></path>
+                </svg> Appearance
+            </button>
+            <button class="set-nav-item"
+                onclick="{% if session.get('user_id') %}switchTab('notifications'){% else %}closeSettings(); document.querySelector('.signup-trigger').click();{% endif %}">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                </svg> Notifications
+            </button>
+
+            <div class="nav-group-label" style="margin-top: 20px;">Support & Legal</div>
+            <button class="set-nav-item" onclick="switchTab('about')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg> About
+            </button>
+            <button class="set-nav-item" onclick="switchTab('privacy')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg> Privacy Policy
+            </button>
+            <button class="set-nav-item" onclick="switchTab('terms')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg> Terms of Service
+            </button>
+        </div>
+    </div>
+
+    <div class="settings-main">
+        <!-- Account Tab -->
+        <div id="set-tab-account" class="set-panel {% if session.get('user_id') %}active{% endif %}">
+            <div class="set-section">
+                <div class="section-header">
+                    <h3>Profile Information</h3>
+                    <p>Manage your public profile and identity.</p>
+                </div>
+                <div class="profile-edit-row">
+                    <div class="avatar-container" onclick="document.getElementById('avatarUpload').click()">
+                        <img src="{{ (avatar if avatar.startswith('/static/') else '/static/avatars/' + avatar) if avatar else 'https://via.placeholder.com/100' }}"
+                            id="settingsAvatarPreview" alt="Avatar">
+                        <div class="avatar-overlay">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path
+                                    d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z">
+                                </path>
+                                <circle cx="12" cy="13" r="4"></circle>
+                            </svg>
+                        </div>
+                        <input type="file" id="avatarUpload" hidden accept="image/*" onchange="previewAvatar(this)">
+                    </div>
+                    <div class="set-inputs">
+                        <div class="input-group">
+                            <label>Display Name</label>
+                            <input type="text" id="settingsUsername" value="{{ username }}" placeholder="Your Name">
+                        </div>
+                        <div class="input-group">
+                            <label>Email Address</label>
+                            <input type="email" value="{{ email }}" disabled class="disabled-input">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-top: 20px;">
+                    <label>Bio</label>
+                    <textarea id="settingsBio" rows="3" placeholder="Tell us about yourself...">{{ bio }}</textarea>
+                </div>
+
+                <div class="social-inputs-grid">
+                    <div class="input-group">
+                        <label>Website</label>
+                        <input type="url" id="settingsWebsite" value="{{ website }}"
+                            placeholder="https:// portfolio.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Instagram</label>
+                        <input type="text" id="settingsInstagram" value="{{ instagram }}" placeholder="@username">
+                    </div>
+                    <div class="input-group">
+                        <label>Twitter / X</label>
+                        <input type="text" id="settingsTwitter" value="{{ twitter }}" placeholder="@username">
+                    </div>
+                    <div class="input-group">
+                        <label>Contact Email</label>
+                        <input type="email" id="settingsContactEmail" value="{{ contact_email }}"
+                            placeholder="public@mail.com">
+                    </div>
+                </div>
+            </div>
+
+            <div class="set-section">
+                <div class="section-header">
+                    <h3>Security</h3>
+                    <p>Update your password to keep your account safe.</p>
+                </div>
+                <div class="password-grid">
+                    <div class="input-group">
+                        <label>Current Password</label>
+                        <input type="password" id="settingsCurrentPass" placeholder="••••••••">
+                    </div>
+                    <div class="input-group">
+                        <label>New Password</label>
+                        <input type="password" id="settingsNewPass" placeholder="••••••••">
+                    </div>
+                </div>
+                <button class="btn-secondary" onclick="updateSettingsPassword(this)">Update Password</button>
+            </div>
+
+            <div class="set-actions">
+                <button class="btn-primary" onclick="saveAccountSettings(this)">Save Changes</button>
+            </div>
+        </div>
+
+        <!-- Appearance Tab -->
+        <div id="set-tab-appearance" class="set-panel {% if not session.get('user_id') %}active{% endif %}">
+            <div class="set-section">
+                <div class="section-header">
+                    <h3>Theme Mode</h3>
+                    <p>Customize how wallpepersphere looks for you.</p>
+                </div>
+                <div class="toggle-row">
+                    <span>Light Mode Activation</span>
+                    <label class="switch">
+                        <input type="checkbox" id="themeModeToggle" onchange="toggleThemeMode(this)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="set-section">
+                <div class="section-header">
+                    <h3>Accent Color</h3>
+                    <p>Select a color that matches your style.</p>
+                </div>
+                <div class="theme-grid">
+                    <div class="theme-swatch" style="background: #0a84ff;" onclick="setTheme('#0a84ff', this)"></div>
+                    <div class="theme-swatch" style="background: #ff453a;" onclick="setTheme('#ff453a', this)"></div>
+                    <div class="theme-swatch" style="background: #30d158;" onclick="setTheme('#30d158', this)"></div>
+                    <div class="theme-swatch" style="background: #bf5af2;" onclick="setTheme('#bf5af2', this)"></div>
+                    <div class="theme-swatch" style="background: #ff9f0a;" onclick="setTheme('#ff9f0a', this)"></div>
+                    <div class="theme-swatch" style="background: #64d2ff;" onclick="setTheme('#64d2ff', this)"></div>
+                    <div class="theme-swatch" id="customColorSwatch"
+                        style="background: conic-gradient(from 180deg at 50% 50%, #FF0000 0deg, #00FF00 120deg, #0000FF 240deg, #FF0000 360deg);">
+                        <input type="color" id="themeColorInput"
+                            style="opacity: 0; width: 100%; height: 100%; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="set-tab-notifications" class="set-panel">
+            <div class="set-section">
+                <div class="section-header">
+                    <h3>Email Preferences</h3>
+                    <p>Decide what updates you want to receive.</p>
+                </div>
+                <div class="toggle-row">
+                    <span>New followers & Engagement</span>
+                    <div class="toggle-switch active" onclick="this.classList.toggle('active')"></div>
+                </div>
+                <div class="toggle-row">
+                    <span>Product updates & Highlights</span>
+                    <div class="toggle-switch" onclick="this.classList.toggle('active')"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- About Tab -->
+        <div id="set-tab-about" class="set-panel">
+            <div class="about-hero">
+                <div class="owner-avatar">
+                    <img src="/static/owner.jpg" alt="Asanji Bruno"
+                        onerror="this.src='https://via.placeholder.com/100'">
+                </div>
+                <h2>Asanji Bruno</h2>
+                <p>Founder & Lead Designer</p>
+                <div class="social-pills">
+                    <span class="pill">Creator</span>
+                    <span class="pill">Developer</span>
+                    <span class="pill">Photographer</span>
+                </div>
+            </div>
+
+            <div class="set-section">
+                <h3>Our Mission</h3>
+                <p class="rich-text">
+                    wallpepersphere was born from a simple idea: <strong>Creativity should be accessible to
+                        everyone.</strong> We provide a high-performance platform for creators to find, generate, and
+                    share stunning 4K assets. Whether you're a designer looking for a logo or a dreamer generating art
+                    with AI, we're here to power your imagination.
+                </p>
+            </div>
+
+            <div class="set-section">
+                <h3>How wallpepersphere Works</h3>
+                <div class="work-steps">
+                    <div class="step">
+                        <div class="step-num">1</div>
+                        <div><strong>Explore:</strong> Browse curated 4K wallpapers.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">2</div>
+                        <div><strong>Generate:</strong> Use Vertex AI to create art.</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num">3</div>
+                        <div><strong>Edit:</strong> Refine assets in our Studio.</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="set-section feedback-section">
+                <h3>Send Feedback</h3>
+                <p>We're constantly evolving. Your voice helps us grow.</p>
+                <div class="input-group">
+                    <textarea id="feedbackText" rows="3" placeholder="What can we do better?"></textarea>
+                </div>
+                <button class="btn-primary" onclick="sendFeedback()" style="width: 100%;">Submit Feedback</button>
+            </div>
+        </div>
+
+        <!-- Privacy Tab -->
+        <div id="set-tab-privacy" class="set-panel">
+            <div class="set-section">
+                <h3>Privacy Policy</h3>
+                <div class="rich-text legal-text">
+                    <p><strong>Last Updated: February 2026</strong></p>
+                    <p>At wallpepersphere, your privacy is paramount. This policy outlines how we handle your data:</p>
+                    <ul>
+                        <li><strong>Data Collection:</strong> We collect basic account info (email, username) and track
+                            anonymous visit data to improve performance.</li>
+                        <li><strong>Cookies:</strong> We use essential cookies to keep you logged in and remember your
+                            theme preferences.</li>
+                        <li><strong>Asset Safety:</strong> We do not sell your personal images. Uploaded content remains
+                            your property unless deleted.</li>
+                        <li><strong>Third Parties:</strong> We use Google Analytics and ip-api for geolocation. No
+                            private data is shared for advertising.</li>
+                    </ul>
+                    <p>For data deletion requests, please contact us via the feedback tool.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Terms Tab -->
+        <div id="set-tab-terms" class="set-panel">
+            <div class="set-section">
+                <h3>Terms of Service</h3>
+                <div class="rich-text legal-text">
+                    <p><strong>1. Acceptance of Terms</strong><br>By using wallpepersphere, you agree to these legal
+                        conditions.</p>
+                    <p><strong>2. Usage License</strong><br>Assets are provided for personal use. Commercial
+                        redistribution of AI-generated assets or library images is prohibited without an explicit
+                        license.</p>
+                    <p><strong>3. Content Responsibility</strong><br>Users are responsible for the content they upload.
+                        wallpepersphere reserves the right to remove any content flagged for security or safety
+                        violations.</p>
+                    <p><strong>4. AI Generations</strong><br>AI-generated content is powered by proprietary models. We
+                        claim no copyright over the prompts you provide, but we reserve the right to display generations
+                        in our public gallery.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Tab (Contextual) -->
+        <div id="set-tab-report" class="set-panel">
+            <div class="set-section">
+                <h3>Report Content</h3>
+                <p>Help us keep the sphere safe.</p>
+                <div class="input-group">
+                    <label>Reason for Report</label>
+                    <div class="checkbox-list">
+                        <label class="check-item">
+                            <input type="checkbox" class="report-reason" value="inappropriate"> Inappropriate Content
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" class="report-reason" value="copyright"> Copyright Claim
+                        </label>
+                        <label class="check-item">
+                            <input type="checkbox" class="report-reason" value="quality"> Low Quality / Spam
+                        </label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Details</label>
+                    <textarea id="reportMessage" rows="4" placeholder="Briefly describe the issue..."></textarea>
+                </div>
+                <button class="btn-primary report-submit-btn" onclick="submitSettingsReport(this)">Submit
+                    Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --set-padding: 30px;
+    }
+
+    .settings-wrapper {
+        display: flex;
+        gap: 0;
+        max-width: 1100px;
+        margin: 0 auto;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+        height: 85vh;
+        max-height: 800px;
+        background: var(--bg-body);
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
+        position: relative;
+    }
+
+    .settings-nav {
+        width: 280px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        padding: var(--set-padding);
+        background: var(--bg-surface);
+        border-right: 1px solid var(--border-color);
+    }
+
+    .settings-title {
+        font-size: 1.6rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        color: var(--text-primary);
+    }
+
+    .nav-group-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        letter-spacing: 1px;
+        margin-bottom: 10px;
+        padding-left: 10px;
+    }
+
+    .set-nav-item {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 12px 16px;
+        text-align: left;
+        cursor: pointer;
+        border-radius: 12px;
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: 0.2s;
+        font-weight: 500;
+        margin-bottom: 4px;
+    }
+
+    .set-nav-item:hover {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+    }
+
+    .set-nav-item.active {
+        background: var(--primary);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .settings-main {
+        flex: 1;
+        padding: var(--set-padding);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary) transparent;
+        background: linear-gradient(135deg, var(--bg-body), var(--bg-surface));
+    }
+
+    .settings-main::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .settings-main::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 10px;
+    }
+
+    .set-panel {
+        display: none;
+        animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .set-panel.active {
+        display: block;
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .set-section {
+        margin-bottom: 40px;
+    }
+
+    .section-header {
+        margin-bottom: 25px;
+    }
+
+    .section-header h3 {
+        margin: 0 0 5px;
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .section-header p {
+        margin: 0;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .input-group {
+        margin-bottom: 20px;
+    }
+
+    .input-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+
+    .input-group input,
+    .input-group textarea {
+        width: 100%;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        color: var(--text-primary);
+        padding: 14px;
+        border-radius: 12px;
+        font-family: inherit;
+        box-sizing: border-box;
+        transition: 0.2s;
+    }
+
+    .input-group input:focus,
+    .input-group textarea:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+    }
+
+    .disabled-input {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .profile-edit-row {
+        display: flex;
+        gap: 25px;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+
+    .avatar-container {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: var(--hover-bg);
+        position: relative;
+        overflow: hidden;
+        cursor: pointer;
+        flex-shrink: 0;
+        border: 2px solid var(--border-color);
+    }
+
+    .avatar-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .avatar-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.4);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: 0.2s;
+        color: white;
+    }
+
+    .avatar-container:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .social-inputs-grid,
+    .password-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+
+    @media (max-width: 600px) {
+
+        .social-inputs-grid,
+        .password-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .btn-primary {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .btn-secondary {
+        background: var(--hover-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--border-color);
+        padding: 10px 20px;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    .btn-secondary:hover {
+        background: var(--border-color);
+    }
+
+    .toggle-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: var(--hover-bg);
+        padding: 16px 20px;
+        border-radius: 16px;
+        margin-bottom: 15px;
+    }
+
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        inset: 0;
+        background-color: var(--border-color);
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(20px);
+    }
+
+    .theme-grid {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .theme-swatch {
+        width: 45px;
+        height: 45px;
+        border-radius: 14px;
+        cursor: pointer;
+        border: 3px solid transparent;
+        transition: 0.2s;
+    }
+
+    .theme-swatch:hover {
+        transform: scale(1.1);
+    }
+
+    .theme-swatch.active {
+        border-color: var(--text-primary);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .about-hero {
+        text-align: center;
+        padding-bottom: 40px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 30px;
+    }
+
+    .owner-avatar {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        margin: 0 auto 20px;
+        border: 4px solid var(--primary);
+        overflow: hidden;
+    }
+
+    .owner-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .social-pills {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 15px;
+    }
+
+    .pill {
+        background: var(--hover-bg);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+    }
+
+    .rich-text {
+        line-height: 1.7;
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+
+    .rich-text strong {
+        color: var(--text-primary);
+    }
+
+    .legal-text {
+        font-size: 0.9rem;
+    }
+
+    .legal-text p,
+    .legal-text li {
+        margin-bottom: 15px;
+    }
+
+    .work-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .step {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: var(--hover-bg);
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .step-num {
+        width: 28px;
+        height: 28px;
+        background: var(--primary);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+        font-weight: 800;
+    }
+
+    .checkbox-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .check-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        cursor: pointer;
+        font-size: 0.95rem;
+    }
+
+    .check-item input {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--primary);
+    }
+
+    .report-submit-btn {
+        background: #ff453a;
+        width: 100%;
+        margin-top: 20px;
+    }
+
+    .close-settings-btn {
+        position: absolute;
+        top: 25px;
+        right: 25px;
+        background: var(--hover-bg);
+        border: none;
+        color: var(--text-primary);
+        cursor: pointer;
+        z-index: 100;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: 0.2s;
+    }
+
+    .close-settings-btn:hover {
+        background: var(--border-color);
+        transform: rotate(90deg);
+    }
+
+    @media (max-width: 850px) {
+        .settings-wrapper {
+            flex-direction: column;
+            height: 100vh;
+            max-height: none;
+            width: 100%;
+            border-radius: 0;
+            border: none;
+        }
+
+        .settings-nav {
+            width: 100%;
+            flex-direction: row;
+            padding: 15px;
+            overflow-x: auto;
+            gap: 10px;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .desktop-only {
+            display: none;
+        }
+
+        .nav-groups-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-group-label {
+            display: none;
+        }
+
+        .set-nav-item {
+            margin-bottom: 0;
+            white-space: nowrap;
+            padding: 10px 18px;
+        }
+
+        .settings-main {
+            padding: 25px 20px 80px;
+        }
+
+        .close-settings-btn {
+            top: 15px;
+            right: 15px;
+            width: 34px;
+            height: 34px;
+        }
+    }
+</style>
+
+<script>
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('settingsAvatarPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.set-nav-item').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.set-panel').forEach(p => p.classList.remove('active'));
+
+        // Match button with either onclick string or a specific class if we had one
+        const btn = Array.from(document.querySelectorAll('.set-nav-item')).find(b => b.getAttribute('onclick')?.includes(`'${tabId}'`));
+        if (btn) btn.classList.add('active');
+
+        const panel = document.getElementById(`set-tab-${tabId}`);
+        if (panel) panel.classList.add('active');
+
+        // Update URL to match tab (SEO/Deep Link)
+        const url = tabId === 'about' ? '/about' : (tabId === 'privacy' ? '/privacy' : (tabId === 'terms' ? '/terms' : '/settings'));
+        if (typeof history.replaceState === 'function') {
+            history.replaceState({ modal: 'settings', tab: tabId }, '', url);
+        }
+    }
+
+    // Assign globally to handle deep links from home.html
+    window.switchSettingsTab = switchTab;
+
+    function saveAccountSettings(btn) {
+        const username = document.getElementById('settingsUsername').value;
+        const bio = document.getElementById('settingsBio').value;
+        const website = document.getElementById('settingsWebsite').value;
+        const instagram = document.getElementById('settingsInstagram').value;
+        const twitter = document.getElementById('settingsTwitter').value;
+        const contactEmail = document.getElementById('settingsContactEmail').value;
+        const originalText = btn.innerHTML;
+
+        btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" class="spin"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Saving...';
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append('username', username);
+        formData.append('bio', bio);
+        formData.append('website', website);
+        formData.append('instagram', instagram);
+        formData.append('twitter', twitter);
+        formData.append('contact_email', contactEmail);
+
+        const avatarInput = document.getElementById('avatarUpload');
+        if (avatarInput.files[0]) formData.append('avatar', avatarInput.files[0]);
+
+        fetch('/update-profile', { method: 'POST', body: formData })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                if (data.success) {
+                    btn.innerHTML = 'Saved Successfully!';
+                    btn.style.backgroundColor = '#4caf50';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.backgroundColor = '';
+                    }, 2500);
+                } else {
+                    btn.innerHTML = originalText;
+                    alert(data.message || 'Error saving settings');
+                }
+            })
+            .catch(() => {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+                alert('Connection failed');
+            });
+    }
+
+    function updateSettingsPassword(btn) {
+        const currentPass = document.getElementById('settingsCurrentPass').value;
+        const newPass = document.getElementById('settingsNewPass').value;
+        if (!newPass) return alert('Enter new password');
+
+        const originalText = btn.textContent;
+        btn.textContent = 'Updating...';
+        btn.disabled = true;
+
+        fetch('/update-profile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: newPass, current_password: currentPass })
+        })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                if (data.success) {
+                    document.getElementById('settingsCurrentPass').value = '';
+                    document.getElementById('settingsNewPass').value = '';
+                    alert('Password updated!');
+                } else alert(data.message);
+            });
+    }
+
+    function sendFeedback() {
+        const text = document.getElementById('feedbackText').value;
+        if (!text.trim()) return alert('Type something...');
+
+        const btn = document.querySelector('.feedback-section .btn-primary');
+        const originalText = btn.textContent;
+        btn.textContent = 'Sending...';
+        btn.disabled = true;
+
+        fetch('/api/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+        })
+            .then(r => r.json())
+            .then(data => {
+                btn.textContent = originalText;
+                btn.disabled = false;
+                if (data.success) {
+                    alert('Feedback sent! Thanks.');
+                    document.getElementById('feedbackText').value = '';
+                }
+            });
+    }
+
+    function submitSettingsReport(btn) {
+        const reasons = Array.from(document.querySelectorAll('.report-reason:checked')).map(cb => cb.value);
+        const message = document.getElementById('reportMessage').value;
+        if (reasons.length === 0 && !message.trim()) return alert("Check a reason.");
+
+        const originalText = btn.textContent;
+        btn.textContent = 'Reporting...';
+        btn.disabled = true;
+
+        const asset = window.currentReportAsset || {};
+        fetch('/api/report', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ asset_id: asset.id, category: asset.category, reasons: reasons, message: message })
+        })
+            .then(r => r.json())
+            .then(data => {
+                btn.disabled = false;
+                btn.textContent = originalText;
+                if (data.success) {
+                    alert('Content reported.');
+                    closeSettings();
+                }
+            });
+    }
+
+    // Init Theme Controls inside Modal
+    (function () {
+        const mode = document.documentElement.getAttribute('data-theme');
+        const toggle = document.getElementById('themeModeToggle');
+        if (toggle) toggle.checked = (mode === 'light');
+
+        const primary = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim();
+        document.querySelectorAll('.theme-swatch').forEach(s => {
+            if (s.style.backgroundColor.includes(primary)) s.classList.add('active');
+        });
+
+        const colorInput = document.getElementById('themeColorInput');
+        if (colorInput) {
+            colorInput.addEventListener('input', (e) => setTheme(e.target.value, document.getElementById('customColorSwatch')));
+        }
+    })();
+</script>
