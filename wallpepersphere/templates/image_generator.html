@@ -797,6 +797,23 @@
         let currentGeneratedFilename = null;
         let generationHistory = [];
 
+        // --- Tracking Helper ---
+        function trackGenerationEvent(filename, prompt) {
+            // 1. Google Analytics
+            if (typeof gtag === 'function') {
+                gtag('event', 'generate_image', {
+                    'event_category': 'AI',
+                    'event_label': prompt.substring(0, 50)
+                });
+            }
+            // 2. Backend Tracking
+            fetch('/api/track/generate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ filename: filename, prompt: prompt })
+            }).catch(e => console.warn('Tracking failed', e));
+        }
+
         // --- Local Storage & State ---
         function loadHistory() {
             generationHistory = JSON.parse(localStorage.getItem('generation_history')) || [];
@@ -919,6 +936,51 @@
             workspace.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
+        // --- Persistent Cooldown Logic ---
+        function startCooldown(seconds) {
+            const expiry = Date.now() + (seconds * 1000);
+            localStorage.setItem('gen_cooldown_expiry', expiry);
+            runCooldownTimer(seconds);
+        }
+
+        function runCooldownTimer(seconds) {
+            isClientCoolingDown = true;
+            generateBtn.disabled = true;
+            const originalText = "Generate Image";
+            const svgEl = generateBtn.querySelector('svg');
+            const originalIcon = svgEl ? svgEl.outerHTML : ''; 
+            
+            let countdown = seconds;
+            
+            // Clear existing interval if any
+            if (window.genCooldownInterval) clearInterval(window.genCooldownInterval);
+
+            window.genCooldownInterval = setInterval(() => {
+                generateBtn.innerHTML = `<span>Please wait (${countdown}s)</span>`;
+                countdown--;
+                if (countdown < 0) {
+                    clearInterval(window.genCooldownInterval);
+                    generateBtn.disabled = false;
+                    generateBtn.innerHTML = `${originalIcon}<span>${originalText}</span>`;
+                    isClientCoolingDown = false;
+                    generationCount = 0;
+                    localStorage.removeItem('gen_cooldown_expiry');
+                }
+            }, 1000);
+        }
+
+        function checkPendingCooldown() {
+            const expiry = localStorage.getItem('gen_cooldown_expiry');
+            if (expiry) {
+                const remaining = Math.ceil((parseInt(expiry) - Date.now()) / 1000);
+                if (remaining > 0) {
+                    runCooldownTimer(remaining);
+                } else {
+                    localStorage.removeItem('gen_cooldown_expiry');
+                }
+            }
+        }
+
         // --- Event Listeners ---
         generateBtn.addEventListener('click', handleGenerateClick);
         retryBtn.addEventListener('click', () => showView(workspace));
@@ -1000,23 +1062,19 @@
             });
         }
 
-        function isUserLoggedIn() {
-            return !!localStorage.getItem('user_session');
-        }
-
         function checkGuestLimit() {
-            if (isUserLoggedIn()) return true;
+            if (SessionMonitor.isLoggedIn()) return true;
             const count = parseInt(localStorage.getItem('guest_gen_count') || '0');
             if (count >= 5) {
                 if (typeof openAuthModal === 'function') openAuthModal('signup');
-                else alert("Please register to generate more images.");
+                else if (typeof showToast === 'function') showToast("Please register to generate more images.", 'error');
                 return false;
             }
             return true;
         }
 
         function incrementGuestCount() {
-            if (!isUserLoggedIn()) {
+            if (!SessionMonitor.isLoggedIn()) {
                 const count = parseInt(localStorage.getItem('guest_gen_count') || '0');
                 localStorage.setItem('guest_gen_count', count + 1);
             }
@@ -1027,23 +1085,7 @@
 
             // Check for client-side cooldown after 3 generations
             if (generationCount >= CLIENT_GENERATION_LIMIT) {
-                isClientCoolingDown = true;
-                generateBtn.disabled = true;
-                const originalText = "Generate Image";
-                const originalIcon = generateBtn.querySelector('svg').outerHTML;
-                let countdown = CLIENT_COOLDOWN_SECONDS;
-
-                const cooldownInterval = setInterval(() => {
-                    generateBtn.innerHTML = `<span>Please wait (${countdown}s)</span>`;
-                    countdown--;
-                    if (countdown < 0) {
-                        clearInterval(cooldownInterval);
-                        generateBtn.disabled = false;
-                        generateBtn.innerHTML = `${originalIcon}<span>${originalText}</span>`;
-                        isClientCoolingDown = false;
-                        generationCount = 0; // Reset counter after cooldown
-                    }
-                }, 1000);
+                startCooldown(CLIENT_COOLDOWN_SECONDS);
                 return;
             }
 
@@ -1051,7 +1093,7 @@
 
             const prompt = promptInput.value.trim();
             if (!prompt) {
-                alert('Please enter a prompt to generate an image.');
+                if (typeof showToast === 'function') showToast('Please enter a prompt to generate an image.', 'error');
                 return;
             }
 
@@ -1096,6 +1138,7 @@
                         const filename = data.data.generated_filename;
                         currentGeneratedFilename = filename;
                         addToHistory(filename, prompt);
+                        trackGenerationEvent(filename, prompt);
                         showResultView(filename);
                     } else if (data.status === 'failed') {
                         clearInterval(interval);
@@ -1122,6 +1165,9 @@
                                     generateBtn.innerHTML = `${originalIcon}<span>${originalText}</span>`;
                                 }
                             }, 1000);
+                        } else if (data.error === 'UNEXPECTED_GENERATION_ERROR' || (data.error && data.error.includes('list index out of range'))) {
+                            generateBtn.disabled = false;
+                            showError('Our server thinks the image is out of range.<br><br><a href="https://cloud.google.com/vertex-ai/generative-ai/docs/image/responsible-ai-imagery" target="_blank" style="color: var(--ai-primary); text-decoration: underline;">Learn more about Google Vertex AI content limits</a>');
                         } else {
                             generateBtn.disabled = false;
                             showError(data.error || 'An unknown error occurred during generation.');
@@ -1138,7 +1184,7 @@
         async function publishImage(filename, prompt) {
             if (!filename) return false;
 
-            if (!isUserLoggedIn()) {
+            if (!SessionMonitor.isLoggedIn()) {
                 if (typeof openAuthModal === 'function') openAuthModal('signup');
                 return false;
             }
@@ -1275,10 +1321,10 @@
                 if (err.message === 'AUTH_REQUIRED' || err.message.includes('401')) {
                     localStorage.setItem('generation_history', JSON.stringify(generationHistory));
                     if (typeof openAuthModal === 'function') openAuthModal('signup');
-                    else alert("Please log in to publish.");
+                    else if (typeof showToast === 'function') showToast("Please log in to publish.", 'error');
                 } else {
                     console.error(err);
-                    alert(`Publish Error for ${filename}: ${err.message}`);
+                    if (typeof showToast === 'function') showToast(`Publish Error: ${err.message}`, 'error');
                 }
                 if (btn) {
                     btn.disabled = false;
@@ -1302,7 +1348,7 @@
                 }
             }
 
-            alert(`${successCount} of ${imagesToPublish.length} images published successfully.`);
+            if (typeof showToast === 'function') showToast(`${successCount} of ${imagesToPublish.length} images published successfully.`, 'success');
             if (generationHistory.length === 0) {
                 resetGenerator();
             }
@@ -1311,7 +1357,7 @@
         async function handleSaveWork() {
             if (!currentGeneratedFilename) return;
 
-            if (!isUserLoggedIn()) {
+            if (!SessionMonitor.isLoggedIn()) {
                 if (typeof openAuthModal === 'function') openAuthModal('signup');
                 return;
             }
@@ -1332,7 +1378,7 @@
 
                 if (response.status === 401) {
                     if (typeof openAuthModal === 'function') openAuthModal('signup');
-                    else alert("Please log in to save.");
+                    else if (typeof showToast === 'function') showToast("Please log in to save.", 'error');
                     throw new Error("Auth required");
                 }
 
@@ -1346,7 +1392,7 @@
                     throw new Error(data.message);
                 }
             } catch (e) {
-                if (e.message !== "Auth required") alert("Save failed: " + e.message);
+                if (e.message !== "Auth required" && typeof showToast === 'function') showToast("Save failed: " + e.message, 'error');
                 saveWorkBtn.innerHTML = originalHtml;
                 saveWorkBtn.disabled = false;
             }
@@ -1361,7 +1407,7 @@
         }
 
         function showError(message) {
-            errorText.textContent = message;
+            errorText.innerHTML = message;
             showView(errorView);
         }
 
@@ -1432,6 +1478,7 @@
 
         // Initial Load
         loadHistory();
+        checkPendingCooldown();
 
     })();
 </script>
