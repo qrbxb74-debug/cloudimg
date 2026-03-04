@@ -904,6 +904,12 @@
             <!-- SETTINGS SECTION -->
             <div id="section-settings" class="content-section" style="display: none;">
             </div>
+
+            <!-- ABOUT SECTION -->
+            <div id="section-about" class="content-section" style="display: none;"></div>
+             <!-- TERMS SECTION -->
+            <div id="section-terms" class="content-section" style="display: none;"></div>
+             <div id="section-privacy" class="content-section" style="display: none;"></div>
         </main>
     </div>
  <script>
@@ -1496,13 +1502,10 @@
 
             // POPSTATE LISTENER FOR BROWSER BACK BUTTON
             window.addEventListener('popstate', (event) => {
-                // Handle settings modal state first
-                if (event.state && event.state.modal === 'settings') {
+                // Handle settings section state
+                if (event.state && event.state.section === 'section-settings') {
                     openSettings(event.state.tab, false);
                     return; // Exit after handling modal
-                } else if (settingsModal && settingsModal.classList.contains('active') && !['/settings', '/about', '/privacy', '/terms'].includes(window.location.pathname)) {
-                    // If modal is open but we navigated away from a settings URL, close it
-                    closeSettings(false);
                 }
 
                 const urlParams = new URLSearchParams(window.location.search);
@@ -2864,6 +2867,9 @@
                     if (targetId === 'section-generator') loadGeneratorContent();
 
                     if(window.innerWidth <= 768) closeAllMenus();
+                    if (targetId === 'section-about') loadAboutContent();
+                     if (targetId === 'section-terms') loadTermsContent();
+                      if (targetId === 'section-privacy') loadPrivacyContent();
                 });
             });
         });
@@ -3102,21 +3108,24 @@
         // ================= SETTINGS LOGIC =================
         const settingsBtn = document.getElementById('settingsBtn');
         const settingsTriggers = document.querySelectorAll('.settings-trigger');
-        const settingsModal = document.getElementById('settingsModal');
+        const settingsSection = document.getElementById('section-settings');
         const closeSettingsBtn = document.getElementById('closeSettingsBtn');
         function openSettings(targetTab = null, pushState = true) {
             if (typeof closeAllMenus === 'function') closeAllMenus();
-            toggleMobileBackground(true);
+            
+            // Hide all other sections
+            document.querySelectorAll('.content-section').forEach(el => el.style.display = 'none');
+            settingsSection.style.display = 'block';
+            window.scrollTo(0, 0);
             
             // Fetch Settings Template
             fetch('/settings-template')
                 .then(response => response.text())
                 .then(html => {
-                    settingsModal.innerHTML = html;
-                    settingsModal.classList.add('active');
+                    settingsSection.innerHTML = html;
                     
                     // Execute Scripts inside the template
-                    const scripts = settingsModal.querySelectorAll('script');
+                    const scripts = settingsSection.querySelectorAll('script');
                     scripts.forEach(oldScript => {
                         const newScript = document.createElement('script');
                         Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -3135,27 +3144,28 @@
                         if (targetTab === 'about') url = '/about';
                         else if (targetTab === 'privacy') url = '/privacy';
                         else if (targetTab === 'terms') url = '/terms';
-                        history.pushState({ modal: 'settings', tab: targetTab }, '', url);
+                        history.pushState({ section: 'section-settings', tab: targetTab }, '', url);
                     }
                 })
                 .catch(err => console.error('Failed to load settings', err));
         }
 
         function closeSettings(pushState = true) {
-            settingsModal.classList.remove('active');
-            toggleMobileBackground(false);
+            document.getElementById('section-settings').style.display = 'none';
+            document.getElementById('section-home').style.display = 'block';
+            window.scrollTo(0, 0);
+            
             if (typeof gtag === 'function') gtag('event', 'page_view', { page_title: 'Home', page_path: '/' });
 
             // Update History
             if (pushState && ['/settings', '/about', '/privacy', '/terms'].includes(window.location.pathname)) {
-                history.pushState({ modal: null }, '', '/');
+                history.pushState({ section: 'section-home' }, '', '/');
             }
         }
 
         if (settingsBtn) settingsBtn.addEventListener('click', (e) => { e.preventDefault(); openSettings(); });
         settingsTriggers.forEach(btn => btn.addEventListener('click', (e) => { e.preventDefault(); openSettings(); }));
         if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
-        if (settingsModal) settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettings(); });
 
         // Settings Tabs
         window.switchSettingsTab = function(tabName) {
@@ -4319,6 +4329,65 @@
                     toggleMobileBackground(false);
                 }
             });
+        }
+         function loadAboutContent() {
+            const container = document.getElementById('section-about');
+            if (!container || container.innerHTML.trim() !== "") return;
+
+            container.innerHTML = '<div style="display:flex;justify-content:center;padding:50px;"><div class="surface-spinner" style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>';
+
+            fetch('/about-template')
+                .then(response => response.text())
+                .then(html => {
+                    container.innerHTML = html;
+                    // Execute scripts in the template
+                    const scripts = container.querySelectorAll('script');
+                    scripts.forEach(oldScript => {
+                        const newScript = document.createElement('script');
+                        Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                        newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                        oldScript.parentNode.replaceChild(newScript, oldScript);
+                    });
+                    if (window.translationSystem) window.translationSystem.applyTranslations(window.translationSystem.currentLang);
+                })
+                .catch(err => {
+                    console.error("Failed to load About", err);
+                    createErrorCard(container, "Failed to load About.", () => { container.innerHTML=""; loadAboutContent(); });
+                });
+        }
+         function loadPrivacyContent() {
+            const container = document.getElementById('section-privacy');
+            if (!container || container.innerHTML.trim() !== "") return;
+
+            container.innerHTML = '<div style="display:flex;justify-content:center;padding:50px;"><div class="surface-spinner" style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>';
+
+            fetch('/privacy-template')
+                .then(response => response.text())
+                .then(html => {
+                    container.innerHTML = html;
+                       if (window.translationSystem) window.translationSystem.applyTranslations(window.translationSystem.currentLang);
+                })
+                .catch(err => {
+                    console.error("Failed to load privacy", err);
+                    createErrorCard(container, "Failed to load privacy.", () => { container.innerHTML=""; loadPrivacyContent(); });
+                });
+        }
+         function loadTermsContent() {
+            const container = document.getElementById('section-terms');
+            if (!container || container.innerHTML.trim() !== "") return;
+
+            container.innerHTML = '<div style="display:flex;justify-content:center;padding:50px;"><div class="surface-spinner" style="width:40px;height:40px;border:3px solid rgba(255,255,255,0.1);border-top-color:var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;"></div></div>';
+
+            fetch('/terms-template')
+                .then(response => response.text())
+                .then(html => {
+                    container.innerHTML = html;
+                       if (window.translationSystem) window.translationSystem.applyTranslations(window.translationSystem.currentLang);
+                })
+                .catch(err => {
+                    console.error("Failed to load terms", err);
+                    createErrorCard(container, "Failed to load terms.", () => { container.innerHTML=""; loadTermsContent(); });
+                });
         }
 
         // ================= AUTO RELOAD ON VIEW CHANGE =================
