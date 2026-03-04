@@ -1,0 +1,131 @@
+<section class="featured-portfolio-section">
+
+    <style>
+        /* ===== SECTION WRAPPER ===== */
+        .featured-portfolio-section {
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* ===== GRID CONTAINER ===== */
+        .portfolio-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-auto-rows: 250px;
+            gap: 5px;
+
+            width: 100%;
+            max-width: 98%;
+            padding: 15px;
+            
+            background: #0c0c0c1e;
+            border-radius: 20px;
+            box-sizing: border-box;
+        }
+
+        /* ===== GRID BOX ===== */
+        .grid-box {
+            position: relative;
+            overflow: hidden;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            
+        }
+
+        .grid-box:hover {
+            transform: scale(1.03);
+            z-index: 5;
+        }
+
+        /* ===== IMAGE ===== */
+        .grid-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            background-image: linear-gradient(135deg, rgba(245, 193, 156, 0.821), rgba(159, 108, 80, 0.81));
+        }
+
+        /* ===== BIG FEATURE CARD ===== */
+        .large-feature {
+            grid-column: span 2;
+            grid-row: span 2;
+            min-height: 405px;
+        }
+
+        /* ===== OVERLAY ===== */
+        .box-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.45));
+        }
+
+        /* ===== ICON ===== */
+        .corner-icon-circle {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            width: 28px;
+            height: 28px;
+
+            backdrop-filter: blur(8px);
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            color: #fff;
+            transition: transform 0.2s ease;
+        }
+
+        .corner-icon-circle:hover {
+            transform: scale(1.15);
+        }
+
+        /* ===== MOBILE ===== */
+        @media (max-width: 640px) {
+            .portfolio-container {
+                grid-auto-rows: 220px;
+            }
+
+            .large-feature {
+                grid-column: span 1;
+                grid-row: span 1;
+                min-height: 260px;
+            }
+        }
+
+        /* ===== HEADER ===== */
+        .featured-header {
+            width: 100%;
+            max-width: 98%;
+            padding: 0 15px 15px;
+        }
+        .featured-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--text-primary, #fff);
+        }
+
+        /* Hide on Mobile - PC View Only */
+        @media (max-width: 768px) {
+            .featured-portfolio-section {
+                display: none !important;
+            }
+        }
+    </style>
+
+    <div class="featured-header">
+        <h2>Featured Collection</h2>
+    </div>
+
+    <div class="portfolio-container">
+
+    </div>
+</section>
