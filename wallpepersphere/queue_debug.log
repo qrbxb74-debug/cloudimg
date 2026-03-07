@@ -1,0 +1,156 @@
+2026-03-07 00:43:42,071 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 00:45:20,492 - GeminiQueue - INFO - Task 3_1772840720492 added to queue. Queue Size: 1
+2026-03-07 00:45:20,493 - GeminiQueue - INFO - Worker picked up task 3_1772840720492. Starting processing.
+2026-03-07 00:45:20,498 - GeminiQueue - WARNING - Generation Task 3_1772840720492 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 00:45:20,499 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.99s
+2026-03-07 00:46:43,812 - GeminiQueue - INFO - Task 3_1772840803812 added to queue. Queue Size: 1
+2026-03-07 00:46:43,813 - GeminiQueue - INFO - Worker picked up task 3_1772840803812. Starting processing.
+2026-03-07 00:46:43,817 - GeminiQueue - WARNING - Generation Task 3_1772840803812 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 00:46:43,818 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.99s
+2026-03-07 00:50:51,701 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:05:09,437 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:06:04,852 - GeminiQueue - INFO - Task 12_1772841964852 added to queue. Queue Size: 1
+2026-03-07 01:06:04,852 - GeminiQueue - INFO - Worker picked up task 12_1772841964852. Starting processing.
+2026-03-07 01:06:04,862 - GeminiQueue - WARNING - Generation Task 12_1772841964852 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 01:06:04,866 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.99s
+2026-03-07 01:06:52,622 - GeminiQueue - INFO - Task 12_1772842012622 added to queue. Queue Size: 1
+2026-03-07 01:06:52,623 - GeminiQueue - INFO - Worker picked up task 12_1772842012622. Starting processing.
+2026-03-07 01:06:52,629 - GeminiQueue - WARNING - Generation Task 12_1772842012622 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 01:06:52,629 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.99s
+2026-03-07 01:09:36,828 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:10:04,984 - GeminiQueue - INFO - Task 12_1772842204983 added to queue. Queue Size: 1
+2026-03-07 01:10:04,984 - GeminiQueue - INFO - Worker picked up task 12_1772842204983. Starting processing.
+2026-03-07 01:10:04,998 - GeminiQueue - WARNING - Generation Task 12_1772842204983 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 01:10:05,000 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.98s
+2026-03-07 01:13:07,225 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:13:49,760 - GeminiQueue - INFO - Task 12_1772842429759 added to queue. Queue Size: 1
+2026-03-07 01:13:49,760 - GeminiQueue - INFO - Worker picked up task 12_1772842429759. Starting processing.
+2026-03-07 01:13:50,479 - GeminiQueue - WARNING - Generation Task 12_1772842429759 failed: GENERATION_CLIENT_ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-03-07 01:13:50,481 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.28s
+2026-03-07 01:20:18,781 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:21:20,198 - GeminiQueue - INFO - Task 12_1772842880198 added to queue. Queue Size: 1
+2026-03-07 01:21:20,199 - GeminiQueue - INFO - Worker picked up task 12_1772842880198. Starting processing.
+2026-03-07 01:21:20,832 - GeminiQueue - WARNING - Generation Task 12_1772842880198 failed: GENERATION_CLIENT_ERROR: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-03-07 01:21:20,833 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.37s
+2026-03-07 01:36:32,824 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:37:12,638 - GeminiQueue - INFO - Task 12_1772843832638 added to queue. Queue Size: 1
+2026-03-07 01:37:12,639 - GeminiQueue - INFO - Worker picked up task 12_1772843832638. Starting processing.
+2026-03-07 01:37:13,623 - GeminiQueue - WARNING - Generation Task 12_1772843832638 failed: GENERATION_CLIENT_ERROR: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:37:13,624 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.01s
+2026-03-07 01:44:56,545 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:45:09,065 - GeminiQueue - INFO - Task 12_1772844309065 added to queue. Queue Size: 1
+2026-03-07 01:45:09,065 - GeminiQueue - INFO - Worker picked up task 12_1772844309065. Starting processing.
+2026-03-07 01:45:09,922 - GeminiQueue - WARNING - Generation Task 12_1772844309065 failed: GENERATION_CLIENT_ERROR: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:45:09,923 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.14s
+2026-03-07 01:51:18,752 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:51:36,657 - GeminiQueue - INFO - Task 12_1772844696656 added to queue. Queue Size: 1
+2026-03-07 01:51:36,657 - GeminiQueue - INFO - Worker picked up task 12_1772844696656. Starting processing.
+2026-03-07 01:51:37,388 - GeminiQueue - WARNING - Generation Task 12_1772844696656 failed: GENERATION_CLIENT_ERROR: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3.0-generate-001 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:51:37,389 - GeminiQueue - INFO - Rate limit enforcement: Sleeping for 0.27s
+2026-03-07 01:58:18,751 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 01:59:15,339 - GeminiQueue - INFO - Task 12_1772845155339 added to queue. Queue Size: 1
+2026-03-07 01:59:15,339 - GeminiQueue - INFO - Worker picked up task 12_1772845155339. Starting processing.
+2026-03-07 01:59:23,415 - GeminiQueue - INFO - Generation Task 12_1772845155339 completed successfully.
+2026-03-07 02:00:40,786 - GeminiQueue - INFO - Task 12_1772845240786 added to queue. Queue Size: 1
+2026-03-07 02:00:40,786 - GeminiQueue - INFO - Worker picked up task 12_1772845240786. Starting processing.
+2026-03-07 02:00:52,209 - GeminiQueue - INFO - Generation Task 12_1772845240786 completed successfully.
+2026-03-07 02:01:14,816 - GeminiQueue - INFO - Task 12_1772845274776 added to queue. Queue Size: 1
+2026-03-07 02:01:14,816 - GeminiQueue - INFO - Worker picked up task 12_1772845274776. Starting processing.
+2026-03-07 02:01:20,848 - GeminiQueue - INFO - Task 12_1772845274776 completed successfully.
+2026-03-07 02:15:29,954 - GeminiQueue - INFO - Task 12_1772846129953 added to queue. Queue Size: 1
+2026-03-07 02:15:29,955 - GeminiQueue - INFO - Worker picked up task 12_1772846129953. Starting processing.
+2026-03-07 02:15:41,978 - GeminiQueue - INFO - Generation Task 12_1772846129953 completed successfully.
+2026-03-07 02:30:54,483 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 02:39:45,368 - GeminiQueue - INFO - Task 12_1772847585367 added to queue. Queue Size: 1
+2026-03-07 02:39:45,369 - GeminiQueue - INFO - Worker picked up task 12_1772847585367. Starting processing.
+2026-03-07 02:39:57,299 - GeminiQueue - INFO - Generation Task 12_1772847585367 completed successfully.
+2026-03-07 02:44:49,915 - GeminiQueue - INFO - Task 12_1772847889915 added to queue. Queue Size: 1
+2026-03-07 02:44:49,915 - GeminiQueue - INFO - Worker picked up task 12_1772847889915. Starting processing.
+2026-03-07 02:45:03,509 - GeminiQueue - INFO - Generation Task 12_1772847889915 completed successfully.
+2026-03-07 02:46:18,332 - GeminiQueue - INFO - Task 12_1772847978332 added to queue. Queue Size: 1
+2026-03-07 02:46:18,332 - GeminiQueue - INFO - Worker picked up task 12_1772847978332. Starting processing.
+2026-03-07 02:46:26,593 - GeminiQueue - INFO - Generation Task 12_1772847978332 completed successfully.
+2026-03-07 02:50:13,549 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 03:09:36,042 - GeminiQueue - INFO - Task 12_1772849375971 added to queue. Queue Size: 1
+2026-03-07 03:09:36,056 - GeminiQueue - INFO - Worker picked up task 12_1772849375971. Starting processing.
+2026-03-07 03:09:50,058 - GeminiQueue - INFO - Generation Task 12_1772849375971 completed successfully.
+2026-03-07 03:16:05,038 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 03:18:32,964 - GeminiQueue - INFO - Task 12_1772849912964 added to queue. Queue Size: 1
+2026-03-07 03:18:32,964 - GeminiQueue - INFO - Worker picked up task 12_1772849912964. Starting processing.
+2026-03-07 03:18:42,183 - GeminiQueue - INFO - Generation Task 12_1772849912964 completed successfully.
+2026-03-07 03:28:33,206 - GeminiQueue - INFO - Task 12_1772850513143 added to queue. Queue Size: 1
+2026-03-07 03:28:33,208 - GeminiQueue - INFO - Worker picked up task 12_1772850513143. Starting processing.
+2026-03-07 03:28:37,238 - GeminiQueue - INFO - Task 12_1772850513143 completed successfully.
+2026-03-07 03:28:41,739 - GeminiQueue - INFO - Task 12_1772850521724 added to queue. Queue Size: 1
+2026-03-07 03:28:41,739 - GeminiQueue - INFO - Worker picked up task 12_1772850521724. Starting processing.
+2026-03-07 03:28:47,867 - GeminiQueue - INFO - Task 12_1772850521724 completed successfully.
+2026-03-07 03:28:52,722 - GeminiQueue - INFO - Task 12_1772850532692 added to queue. Queue Size: 1
+2026-03-07 03:28:52,722 - GeminiQueue - INFO - Worker picked up task 12_1772850532692. Starting processing.
+2026-03-07 03:28:56,971 - GeminiQueue - INFO - Task 12_1772850532692 completed successfully.
+2026-03-07 03:29:04,433 - GeminiQueue - INFO - Task 12_1772850544431 added to queue. Queue Size: 1
+2026-03-07 03:29:04,433 - GeminiQueue - INFO - Worker picked up task 12_1772850544431. Starting processing.
+2026-03-07 03:29:09,799 - GeminiQueue - INFO - Task 12_1772850544431 completed successfully.
+2026-03-07 03:29:19,582 - GeminiQueue - INFO - Task 12_1772850559581 added to queue. Queue Size: 1
+2026-03-07 03:29:19,582 - GeminiQueue - INFO - Worker picked up task 12_1772850559581. Starting processing.
+2026-03-07 03:29:23,113 - GeminiQueue - INFO - Task 12_1772850559581 completed successfully.
+2026-03-07 03:29:28,913 - GeminiQueue - INFO - Task 12_1772850568912 added to queue. Queue Size: 1
+2026-03-07 03:29:28,913 - GeminiQueue - INFO - Worker picked up task 12_1772850568912. Starting processing.
+2026-03-07 03:29:32,455 - GeminiQueue - INFO - Task 12_1772850568912 completed successfully.
+2026-03-07 04:16:24,436 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 04:17:10,490 - GeminiQueue - INFO - Task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853430490 added to queue. Queue Size: 1
+2026-03-07 04:17:10,491 - GeminiQueue - INFO - Worker picked up task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853430490. Starting processing.
+2026-03-07 04:17:18,533 - GeminiQueue - INFO - Generation Task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853430490 completed successfully.
+2026-03-07 04:18:54,698 - GeminiQueue - INFO - Task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853534698 added to queue. Queue Size: 1
+2026-03-07 04:18:54,699 - GeminiQueue - INFO - Worker picked up task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853534698. Starting processing.
+2026-03-07 04:19:04,977 - GeminiQueue - INFO - Generation Task f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853534698 completed successfully.
+2026-03-07 04:20:13,492 - GeminiQueue - INFO - Task 3_1772853613489 added to queue. Queue Size: 1
+2026-03-07 04:20:13,492 - GeminiQueue - INFO - Worker picked up task 3_1772853613489. Starting processing.
+2026-03-07 04:20:17,941 - GeminiQueue - INFO - Task 3_1772853613489 completed successfully.
+2026-03-07 04:23:47,650 - GeminiQueue - INFO - Task 3_1772853827650 added to queue. Queue Size: 1
+2026-03-07 04:23:47,651 - GeminiQueue - INFO - Worker picked up task 3_1772853827650. Starting processing.
+2026-03-07 04:23:58,465 - GeminiQueue - INFO - Generation Task 3_1772853827650 completed successfully.
+2026-03-07 05:09:27,452 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 11:23:01,391 - GeminiQueue - INFO - Task 12_1772878981391 added to queue. Queue Size: 1
+2026-03-07 11:23:01,392 - GeminiQueue - INFO - Worker picked up task 12_1772878981391. Starting processing.
+2026-03-07 11:23:04,770 - GeminiQueue - WARNING - Generation Task 12_1772878981391 failed: GENERATION_CLIENT_ERROR: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3.0-generate-001 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 11:26:09,111 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 11:27:49,672 - GeminiQueue - INFO - Task 12_1772879269672 added to queue. Queue Size: 1
+2026-03-07 11:27:49,672 - GeminiQueue - INFO - Worker picked up task 12_1772879269672. Starting processing.
+2026-03-07 11:28:03,915 - GeminiQueue - INFO - Generation Task 12_1772879269672 completed successfully.
+2026-03-07 11:29:01,443 - GeminiQueue - INFO - Task 12_1772879341443 added to queue. Queue Size: 1
+2026-03-07 11:29:01,443 - GeminiQueue - INFO - Worker picked up task 12_1772879341443. Starting processing.
+2026-03-07 11:29:13,675 - GeminiQueue - INFO - Generation Task 12_1772879341443 completed successfully.
+2026-03-07 12:41:28,815 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 12:42:09,410 - GeminiQueue - INFO - Task 12_1772883729410 added to queue. Queue Size: 1
+2026-03-07 12:42:09,410 - GeminiQueue - INFO - Worker picked up task 12_1772883729410. Starting processing.
+2026-03-07 12:42:28,209 - GeminiQueue - INFO - Generation Task 12_1772883729410 completed successfully.
+2026-03-07 13:21:09,791 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 13:58:09,044 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 14:09:56,930 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 14:13:30,412 - GeminiQueue - INFO - Task 12_1772889210412 added to queue. Queue Size: 1
+2026-03-07 14:13:30,413 - GeminiQueue - INFO - Worker picked up task 12_1772889210412. Starting processing.
+2026-03-07 14:13:46,872 - GeminiQueue - WARNING - Generation Task 12_1772889210412 failed: UNEXPECTED_GENERATION_ERROR
+2026-03-07 14:21:09,098 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 14:22:49,862 - GeminiQueue - INFO - Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889769862 added to queue. Queue Size: 1
+2026-03-07 14:22:49,863 - GeminiQueue - INFO - Worker picked up task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889769862. Starting processing.
+2026-03-07 14:23:06,198 - GeminiQueue - INFO - Generation Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889769862 completed successfully.
+2026-03-07 14:23:46,343 - GeminiQueue - INFO - Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889826343 added to queue. Queue Size: 1
+2026-03-07 14:23:46,344 - GeminiQueue - INFO - Worker picked up task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889826343. Starting processing.
+2026-03-07 14:23:59,146 - GeminiQueue - INFO - Generation Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889826343 completed successfully.
+2026-03-07 14:26:21,547 - GeminiQueue - INFO - Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889981547 added to queue. Queue Size: 1
+2026-03-07 14:26:21,548 - GeminiQueue - INFO - Worker picked up task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889981547. Starting processing.
+2026-03-07 14:26:26,877 - GeminiQueue - WARNING - Generation Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772889981547 failed: PROMPT_BLOCKED_SAFETY_OR_EMPTY
+2026-03-07 14:27:35,353 - GeminiQueue - INFO - Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890055353 added to queue. Queue Size: 1
+2026-03-07 14:27:35,353 - GeminiQueue - INFO - Worker picked up task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890055353. Starting processing.
+2026-03-07 14:27:49,270 - GeminiQueue - INFO - Generation Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890055353 completed successfully.
+2026-03-07 14:28:11,257 - GeminiQueue - INFO - Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890091256 added to queue. Queue Size: 1
+2026-03-07 14:28:11,257 - GeminiQueue - INFO - Worker picked up task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890091256. Starting processing.
+2026-03-07 14:28:25,471 - GeminiQueue - INFO - Generation Task 74377a29-fa79-4468-9470-bb55eb5c96f0_1772890091256 completed successfully.
+2026-03-07 14:34:30,635 - GeminiQueue - INFO - Queue worker started.
+2026-03-07 14:38:42,756 - GeminiQueue - INFO - Task 12_1772890722756 added to queue. Queue Size: 1
+2026-03-07 14:38:42,757 - GeminiQueue - INFO - Worker picked up task 12_1772890722756. Starting processing.
+2026-03-07 14:38:54,858 - GeminiQueue - INFO - Generation Task 12_1772890722756 completed successfully.
+2026-03-07 14:39:34,608 - GeminiQueue - INFO - Task 12_1772890774566 added to queue. Queue Size: 1
+2026-03-07 14:39:34,608 - GeminiQueue - INFO - Worker picked up task 12_1772890774566. Starting processing.
+2026-03-07 14:39:41,652 - GeminiQueue - INFO - Task 12_1772890774566 completed successfully.
+2026-03-07 14:49:49,590 - GeminiQueue - INFO - Queue worker started.

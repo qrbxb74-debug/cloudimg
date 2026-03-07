@@ -1,0 +1,125 @@
+2026-03-06 23:19:20,901 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-06 23:19:20,902 - GeminiGenerator - INFO - Gemini generating for user test_user: 'A test image of a futuristic banana' | Ratio: 1:1
+2026-03-06 23:19:20,903 - GeminiGenerator - ERROR - Gemini Generation failed: 'Models' object has no attribute 'generate_image'
+2026-03-07 00:39:48,232 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 00:45:20,495 - GeminiGenerator - INFO - Gemini generating for user 3 | Ratio: 1:1 | Ref Image: False
+2026-03-07 00:45:20,496 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: 'Models' object has no attribute 'generate_image'
+2026-03-07 00:46:43,815 - GeminiGenerator - INFO - Gemini generating for user 3 | Ratio: 1:1 | Ref Image: False
+2026-03-07 00:46:43,817 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: 'Models' object has no attribute 'generate_image'
+2026-03-07 00:50:41,057 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 01:04:59,264 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 01:06:04,856 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:06:04,859 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: module 'google.genai.types' has no attribute 'GenerateImageConfig'
+2026-03-07 01:06:52,626 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 01:06:52,628 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: module 'google.genai.types' has no attribute 'GenerateImageConfig'
+2026-03-07 01:09:29,282 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 01:10:04,988 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:10:04,990 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: add_watermark parameter is not supported in Gemini API.
+2026-03-07 01:13:02,691 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 01:13:49,763 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:13:50,479 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-03-07 01:20:11,715 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully.
+2026-03-07 01:21:20,201 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:21:20,830 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 400 INVALID_ARGUMENT. {'error': {'code': 400, 'message': 'API key expired. Please renew the API key.', 'status': 'INVALID_ARGUMENT', 'details': [{'@type': 'type.googleapis.com/google.rpc.ErrorInfo', 'reason': 'API_KEY_INVALID', 'domain': 'googleapis.com', 'metadata': {'service': 'generativelanguage.googleapis.com'}}, {'@type': 'type.googleapis.com/google.rpc.LocalizedMessage', 'locale': 'en-US', 'message': 'API key expired. Please renew the API key.'}]}}
+2026-03-07 01:36:24,305 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 01:37:12,642 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:37:13,622 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:44:44,530 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 01:45:09,069 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:45:09,921 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:51:06,484 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 01:51:36,659 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:51:37,386 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3.0-generate-001 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 01:57:23,100 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 01:57:23,101 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 01:57:23,903 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 01:59:15,340 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 01:59:23,414 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772845163.png
+2026-03-07 02:00:40,788 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 02:00:52,208 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772845252.png
+2026-03-07 02:15:29,958 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 02:15:41,975 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772846141.png
+2026-03-07 02:30:50,830 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 02:30:50,831 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 02:30:51,733 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 02:39:45,372 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 02:39:57,299 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772847597.png
+2026-03-07 02:44:49,922 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: True
+2026-03-07 02:44:52,931 - GeminiGenerator - INFO - Using prepared reference image for generation.
+2026-03-07 02:45:03,507 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772847903.png
+2026-03-07 02:46:18,333 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: True
+2026-03-07 02:46:18,396 - GeminiGenerator - INFO - Using prepared reference image for generation.
+2026-03-07 02:46:26,557 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772847986.png
+2026-03-07 02:50:06,280 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 02:50:06,281 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 02:50:06,800 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 03:09:36,097 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: True
+2026-03-07 03:09:38,469 - GeminiGenerator - INFO - Using prepared reference image for generation.
+2026-03-07 03:09:50,057 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772849390.png
+2026-03-07 03:15:57,056 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 03:15:57,056 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 03:15:57,823 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 03:18:32,967 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: True
+2026-03-07 03:18:33,797 - GeminiGenerator - INFO - Using prepared reference image for generation.
+2026-03-07 03:18:35,116 - GeminiGenerator - ERROR - Vision analysis failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 03:18:42,182 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772849922.png
+2026-03-07 04:16:11,558 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 04:16:11,601 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 04:16:12,456 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 04:17:10,493 - GeminiGenerator - INFO - Gemini generating for user f03ebdb6-ec25-4cae-8e7a-08764cae4cf4 | Ratio: 1:1 | Ref Image: False
+2026-03-07 04:17:18,532 - GeminiGenerator - INFO - Gemini image saved: gemini_f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853438.png
+2026-03-07 04:18:54,701 - GeminiGenerator - INFO - Gemini generating for user f03ebdb6-ec25-4cae-8e7a-08764cae4cf4 | Ratio: 1:1 | Ref Image: True
+2026-03-07 04:18:55,942 - GeminiGenerator - INFO - Using prepared reference image for generation.
+2026-03-07 04:18:57,842 - GeminiGenerator - ERROR - Vision analysis failed: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 04:19:04,976 - GeminiGenerator - INFO - Gemini image saved: gemini_f03ebdb6-ec25-4cae-8e7a-08764cae4cf4_1772853544.png
+2026-03-07 04:23:47,652 - GeminiGenerator - INFO - Gemini generating for user 3 | Ratio: 9:16 | Ref Image: False
+2026-03-07 04:23:58,465 - GeminiGenerator - INFO - Gemini image saved: gemini_3_1772853838.png
+2026-03-07 05:08:36,511 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 05:08:36,534 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 05:09:05,149 - GeminiGenerator - ERROR - Error listing models: [WinError 10060] Une tentative de connexion a échoué car le parti connecté n’a pas répondu convenablement au-delà d’une certaine durée ou une connexion établie a échoué car l’hôte de connexion n’a pas répondu
+2026-03-07 11:23:01,396 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 11:23:04,768 - GeminiGenerator - ERROR - Strict Analysis - Client Error: 404 NOT_FOUND. {'error': {'code': 404, 'message': 'models/imagen-3.0-generate-001 is not found for API version v1beta, or is not supported for predict. Call ListModels to see the list of available models and their supported methods.', 'status': 'NOT_FOUND'}}
+2026-03-07 11:25:59,090 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 11:25:59,091 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 11:25:59,874 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 11:27:49,675 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 11:28:03,900 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772879283.png
+2026-03-07 11:29:01,446 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 11:29:13,673 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772879353.png
+2026-03-07 12:41:25,219 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 12:41:25,220 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 12:41:26,264 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 12:42:09,411 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 1:1 | Ref Image: False
+2026-03-07 12:42:28,208 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772883748.png
+2026-03-07 13:21:02,115 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 13:21:02,117 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 13:21:03,516 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 13:57:34,643 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 13:57:34,644 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 13:57:35,964 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 14:09:25,386 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 14:09:25,387 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 14:09:26,364 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 14:13:30,415 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:13:46,871 - GeminiGenerator - ERROR - Strict Analysis - Unexpected Error: Server disconnected without sending a response.
+2026-03-07 14:20:55,687 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 14:20:55,688 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 14:20:57,246 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 14:22:49,866 - GeminiGenerator - INFO - Gemini generating for user 74377a29-fa79-4468-9470-bb55eb5c96f0 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:23:06,198 - GeminiGenerator - INFO - Gemini image saved: gemini_74377a29-fa79-4468-9470-bb55eb5c96f0_1772889786.png
+2026-03-07 14:23:46,345 - GeminiGenerator - INFO - Gemini generating for user 74377a29-fa79-4468-9470-bb55eb5c96f0 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:23:59,145 - GeminiGenerator - INFO - Gemini image saved: gemini_74377a29-fa79-4468-9470-bb55eb5c96f0_1772889839.png
+2026-03-07 14:26:21,553 - GeminiGenerator - INFO - Gemini generating for user 74377a29-fa79-4468-9470-bb55eb5c96f0 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:26:26,877 - GeminiGenerator - WARNING - Strict Analysis: Gemini generation returned empty response (likely safety block).
+2026-03-07 14:27:35,355 - GeminiGenerator - INFO - Gemini generating for user 74377a29-fa79-4468-9470-bb55eb5c96f0 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:27:49,269 - GeminiGenerator - INFO - Gemini image saved: gemini_74377a29-fa79-4468-9470-bb55eb5c96f0_1772890069.png
+2026-03-07 14:28:11,259 - GeminiGenerator - INFO - Gemini generating for user 74377a29-fa79-4468-9470-bb55eb5c96f0 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:28:25,470 - GeminiGenerator - INFO - Gemini image saved: gemini_74377a29-fa79-4468-9470-bb55eb5c96f0_1772890105.png
+2026-03-07 14:33:22,359 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 14:33:22,359 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 14:33:25,341 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
+2026-03-07 14:38:42,761 - GeminiGenerator - INFO - Gemini generating for user 12 | Ratio: 9:16 | Ref Image: False
+2026-03-07 14:38:54,857 - GeminiGenerator - INFO - Gemini image saved: gemini_12_1772890734.png
+2026-03-07 14:49:37,383 - GeminiGenerator - INFO - Gemini Generator (Imagen 3) initialized successfully. Key: AIza...936U
+2026-03-07 14:49:37,384 - GeminiGenerator - INFO - Searching for available Imagen models...
+2026-03-07 14:49:38,837 - GeminiGenerator - INFO - Found Imagen models: ['models/imagen-4.0-generate-001', 'models/imagen-4.0-ultra-generate-001', 'models/imagen-4.0-fast-generate-001']
