@@ -7,27 +7,63 @@ from google.genai import types
 from PIL import Image
 
 CATEGORIES = [
-"Abstract", "Aesthetic", "AI Art", "Airplanes", "Animals", "Anime", 
-"Architecture", "Art", "Astronomy", "Backgrounds", "Beach", 
-"Biology", "Business", "Cars", "Cartoons", "Celebrities", 
-"City", "Cityscape", "Clouds", "Computers", "Concept Art", 
-"Creative", "Cyberpunk", "Dark", "Design", "Digital Art", 
-"Education", "Fantasy", "Fashion", "Film", "Flowers", 
-"Food", "Forest", "Futuristic", "Gaming", "Geometric", 
-"Gradients", "Graphics", "Health", "Holidays", "Home", 
-"Icons", "Illustrations", "Industrial", "Interiors", 
-"Landscape Photography", "Landscapes", "Lifestyle", "Love", 
-"Macro", "Minimal", "Mountains", "Music", "Nature", 
-"Neon", "Night", "Ocean", "Patterns", "People", 
-"Pets", "Photography", "Portraits", "Quotes", 
-"Retro", "Robotics", "Sci-Fi", "Seasons", "Sky", 
-"Social Media", "Space", "Sports", "Street", 
-"Street Photography", "Surreal", "Technology", 
-"Textures", "Time-lapse", "Travel", "Typography", 
-"Underwater", "Urban", "Vector", "Vehicles", 
-"Vintage", "Water", "Waterfalls", "Weather", 
-"Wildlife", "Winter", "Woods", "Zen"
-
+   "3D Art", "4D Art", "4K", "8K",
+    "Abstract", "Abstract Nature", "Action", "Aesthetic", "Aesthetic Rooms",
+    "Afrofuturism", "Ageing", "AI Art", "AI Generated", "Air",
+    "Airbrush", "Airplanes", "Album Covers", "Alchemy", "Alien Architecture",
+    "Alien Worlds", "Ambient", "Amoled", "Analog", "Ancient Civilizations",
+    "Ancient Egypt", "Ancient Rome", "Android", "Angel", "Animals",
+    "Anime", "Anime Boys", "Anime Girls", "Anime Landscapes", "Apex Legends",
+    "Apocalyptic", "Aquatic", "Arabian Nights", "Arcane", "Architecture",
+    "Archways", "Arctic", "Armor", "Art", "Art Deco",
+    "Art Nouveau", "Astral", "Astronauts", "Astronomy", "Atmospheric",
+    "Attack on Titan", "Aurora", "Autumn", "Avatar", "Aztec",
+    "Baby Animals", "Backgrounds", "Bamboo", "Baroque", "Basketball",
+    "Batik", "Battlefield", "Beach", "Bioluminescence", "Biology",
+    "Black", "Black and White", "Black Hole", "Blade Runner", "Bloodborne",
+    "Bloom", "Blue", "Blue Hour", "Bokeh", "Botanical",
+    "Brands", "Bridges", "Brown", "Brutalist", "Buddha",
+    "Business", "Butterfly", "Call of Duty", "Camo", "Canyon",
+    "Cars", "Cartoons", "Cave", "Celebrities", "Celestial",
+    "Cherry Blossom", "Chess", "Chinese Art", "Chrome", "Chromatic",
+    "Chrysanthemum", "Cinematic", "Cinematic Portraits", "City", "Cityscape",
+    "Claymation", "Clouds", "Clouds at Night", "Cloudpunk", "Coding",
+    "Coffee", "Cold", "Colorful", "Colors", "Columns",
+    "Comet", "Comic Book", "Computers", "Concept Art", "Constellation",
+    "Copper", "Coral Reef", "Cosplay", "Cosmos", "Cottagecore",
+    "Cracked", "Creative", "Creativity", "Crimson", "Crystal",
+    "Cybercity", "Cybernetic", "Cyberpunk", "Cyberspace", "Daemon",
+    "Dark", "Dark Academia", "Dark Fantasy", "Dawn", "DC Comics",
+    "Death Note", "Debris", "Deep Sea", "Demon Slayer", "Depth",
+    "Desert", "Design", "Devil", "Diamonds", "Digital Art",
+    "Dimly Lit", "Dinosaurs", "Dojo", "Doodle", "Dragon",
+    "Dragon Ball Z", "Dusk", "Dystopian", "Earth", "Eclipse",
+    "Education", "Electric", "Eldritch", "Elven", "Emerald",
+    "Enchanted", "Energy", "Epic", "Ethereal", "Explosion",
+    "Extraterrestrial", "Fairy", "Fairy Tale", "Fallen Angel", "Fantasy",
+    "Fashion", "Fern", "Festival", "Fiber Optic", "Film",
+    "Filmgrain", "Fire", "Floral", "Flowers", "Fluid",
+    "Fog", "Folklore", "Food", "Forest", "Fortnite",
+    "Fractal", "Futuristic", "Futuristic City", "Gaming", "Geometric",
+    "Ghibli", "Glitch Art", "Google Pixel", "Gothic", "Gradients",
+    "Grand Theft Auto (GTA)", "Graphics", "Green", "Grey", "Grunge",
+    "HD", "Health", "Holographic", "Holidays", "Home",
+    "Horror", "Icons", "Illustrations", "Impressionism", "Industrial",
+    "Infrared", "Interiors", "iPhone", "Jungle", "K-Pop",
+    "Landscape Photography", "Landscapes", "Lifestyle", "Logos", "Love",
+    "MacBook", "Macro", "Marvel", "Minimal", "Minecraft",
+    "Movies", "Mountains", "Music", "Music Artists", "Naruto",
+    "Nature", "Neon", "Night", "Ocean", "One Piece",
+    "Orange", "Patterns", "People", "Pets", "Photography",
+    "Pink", "Portraits", "Purple", "Quotes", "Red",
+    "Retro", "Robotics", "Samsung", "Sci-Fi", "Seasons",
+    "Sky", "Social Media", "Space", "Sports", "Sports Cars",
+    "Star Wars", "Street", "Street Photography", "Superheroes", "Surreal",
+    "Technology", "Textures", "Time-lapse", "Travel", "TV Shows",
+    "Typography", "Underwater", "Urban", "Vector", "Vehicles",
+    "Video Games", "Vintage", "Water", "Waterfalls", "Weather",
+    "White", "Wildlife", "Winter", "Woods", "Yellow",
+    "Zen"
 ]
 
 class VisualRecognizer:
@@ -136,17 +172,23 @@ class VisualRecognizer:
             
             # We construct a prompt to force the AI to return the specific JSON structure you need.
             prompt = f"""
-            Analyze this image. Select the best category from: {", ".join(CATEGORIES)}
-            
-            Return a valid JSON object. Do not use Markdown.
-            IMPORTANT: Analyze the actual image pixels to provide a good visual description. Do not hallucinate based on filename.
-            Structure:
+            Analyze this image to identify its main subject and visual characteristics.
+            Select the best category for the image from the following list: {", ".join(CATEGORIES)}.
+
+            Your response must be a valid JSON object, without any Markdown formatting.
+
+            IMPORTANT:
+            - The 'name' should be a concise and factual title representing the primary subject of the image (e.g., 'iPhone 17', 'Race Car', 'Eiffel Tower').
+            - The 'description' should provide a brief visual summary of the image.
+            - Do not invent details or base your analysis on the filename. Analyze the image's actual content.
+
+            JSON Structure:
             {{
-                "category": "Selected Category from the list",
-                "name": "A creative title, don't make it too long (4 to 6 words)",
-                "description": "A short, engaging description, don't make it too long (10 to 15 words)",
+                "category": "Selected category from the provided list",
+                "name": "The main subject of the image (e.g., 'iPhone 17', 'race car')",
+                "description": "A short, engaging description of the visual elements (10 to 15 words)",
                 "keywords": "k1 k2...",
-                "color": "Color"
+                "color": "The dominant color in the image"
             }}
             """
 
