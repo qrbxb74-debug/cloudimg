@@ -300,6 +300,7 @@ body {
 
     .mobile-brand-title {
         display: block;
+        font-size: large;
     }
 
     /* Ensure desktop logo is hidden on mobile when logged in */
@@ -6917,4 +6918,5 @@ input[type="search"]::-webkit-search-results-decoration {
     50% {
         transform: translate(-50%, -100%) rotate(180deg);
     }
+
 }
